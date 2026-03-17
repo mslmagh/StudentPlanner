@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Ali",
+    "course": "Calculus",
+    "level": "Beginner",
+    "time": "Evening",
+    "studyType": "Online"
+  },
+  {
+    "name": "Ayşe",
+    "course": "Calculus",
+    "level": "Beginner",
+    "time": "Evening",
+    "studyType": "In-person"
+  },
+  {
+    "name": "Mert",
+    "course": "Physics",
+    "level": "Intermediate",
+    "time": "Afternoon",
+    "studyType": "Online"
+  },
+  {
+    "name": "Zeynep",
+    "course": "Algorithms",
+    "level": "Advanced",
+    "time": "Night",
+    "studyType": "Online"
+  },
+  {
+    "name": "Elif",
+    "course": "Calculus",
+    "level": "Beginner",
+    "time": "Night",
+    "studyType": "Online"
+  },
+  {
+    "name": "Kerem",
+    "course": "Calculus",
+    "level": "Beginner",
+    "time": "Afternoon",
+    "studyType": "In-person"
+  }
+]

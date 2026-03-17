@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Ali",
+    "course": "Calculus",
+    "level": "Beginner",
+    "time": "Evening",
+    "studyType": "Online"
+  },
+  {
+    "name": "Mert",
+    "course": "Physics",
+    "level": "Intermediate",
+    "time": "Afternoon",
+    "studyType": "Online"
+  }
+]
