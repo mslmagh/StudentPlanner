@@ -38,6 +38,10 @@ No backend is used in the current version.
 
 ```text
 StudentPlanner/
+├─ public/
+│  └─ _redirects
+├─ scripts/
+│  └─ generate-planning-pdf.mjs
 ├─ src/
 │  ├─ components/
 │  │  └─ Navbar.jsx
@@ -57,6 +61,8 @@ StudentPlanner/
 ├─ index.html
 ├─ package.json
 ├─ planning-document.md
+├─ planning-document.pdf
+├─ vercel.json
 └─ README.md
 ```
 
@@ -106,6 +112,12 @@ Then open the local URL shown in terminal (usually `http://localhost:5173`).
 npm run build
 ```
 
+Generate planning document PDF:
+
+```bash
+npm run plan:pdf
+```
+
 Preview production build locally:
 
 ```bash
@@ -135,4 +147,12 @@ See the AI agent planning file:
 
 - [planning-document.md](./planning-document.md)
 
+- [planning-document.pdf](./planning-document.pdf)
+
 This document explains the transition from current rule-based mock matching to a future CrewAI multi-agent architecture.
+
+## Homework 2 Submission Checklist
+
+- GitHub repository link
+- Planning document PDF (`planning-document.pdf`)
+- Live demo link (Vercel or Netlify)
