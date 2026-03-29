@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import random
@@ -6,6 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from crew import run_crew
@@ -27,6 +29,8 @@ MOCK_PARTNERS_PATH = Path(__file__).parent.parent / "src" / "data" / "mockPartne
 with open(MOCK_PARTNERS_PATH, "r", encoding="utf-8") as f:
     ALL_PARTNERS = json.load(f)
 
+TIME_ORDER = ["Morning", "Afternoon", "Evening", "Night"]
+
 
 class MatchRequest(BaseModel):
     course: str
@@ -35,59 +39,122 @@ class MatchRequest(BaseModel):
     studyType: str
 
 
-def find_best_candidate(request: MatchRequest) -> dict | None:
+def _partner_score(partner: dict, request: MatchRequest) -> int:
     """
-    Find candidates from mock data. Same logic as frontend matching.js
-    Falls back to same course only, then random if nothing matches.
+    Puanlama mantığı:
+      - Aynı ders:             +50
+      - Aynı seviye:           +30
+      - Zaman dilimi farkı 0:  +20  / fark 1: +10  / fark ≥ 2: +0
+      - Aynı çalışma türü:     +10
+    Maks: 110
     """
-    time_order = ["Morning", "Afternoon", "Evening", "Night"]
-
-    def similar_time(t1: str, t2: str) -> bool:
-        try:
-            return abs(time_order.index(t1) - time_order.index(t2)) <= 1
-        except ValueError:
-            return t1 == t2
-
-    exact = [
-        p for p in ALL_PARTNERS
-        if p["course"].lower() == request.course.lower()
-        and p["level"] == request.level
-        and similar_time(request.preferredTime, p["time"])
-    ]
-    if exact:
-        return random.choice(exact)
-
-    course_match = [
-        p for p in ALL_PARTNERS
-        if p["course"].lower() == request.course.lower()
-    ]
-    if course_match:
-        return random.choice(course_match)
-
-    return random.choice(ALL_PARTNERS) if ALL_PARTNERS else None
+    score = 0
+    if partner["course"].lower() == request.course.lower():
+        score += 50
+    if partner["level"] == request.level:
+        score += 30
+    try:
+        gap = abs(TIME_ORDER.index(request.preferredTime) - TIME_ORDER.index(partner["time"]))
+        score += max(0, 20 - gap * 10)
+    except ValueError:
+        pass
+    if partner["studyType"] == request.studyType:
+        score += 10
+    return score
 
 
+def find_top_candidates(request: MatchRequest, n: int = 3) -> list[dict]:
+    """
+    Tüm partnerleri puanla, en yüksek n tanesini döndür.
+    Aynı puana sahip adaylar arasında rastgele seçim yapılır (tekrarlı çalıştırmalarda çeşitlilik sağlar).
+    """
+    scored = [(partner, _partner_score(partner, request)) for partner in ALL_PARTNERS]
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    # Aynı puan grubu içinde karıştır — her seferinde farklı sıra
+    result: list[dict] = []
+    i = 0
+    while i < len(scored) and len(result) < n:
+        same_score = [p for p, s in scored[i:] if s == scored[i][1]]
+        random.shuffle(same_score)
+        for p in same_score:
+            result.append(p)
+            if len(result) == n:
+                break
+        i += len(same_score)
+
+    # Yeterli partner yoksa rastgele tamamla
+    if not result:
+        result = random.sample(ALL_PARTNERS, min(n, len(ALL_PARTNERS)))
+
+    return result[:n]
+
+
+# ─── Eski tekil endpoint (geriye dönük uyumluluk) ───
 @app.post("/api/match")
 async def match_partner(request: MatchRequest):
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set in .env")
 
-    partner = find_best_candidate(request)
-    if not partner:
+    candidates = find_top_candidates(request, n=1)
+    if not candidates:
         raise HTTPException(status_code=404, detail="No partners available in mock data")
 
     try:
-        result = run_crew(
+        result = await asyncio.to_thread(
+            run_crew,
             course=request.course,
             level=request.level,
             preferred_time=request.preferredTime,
             study_type=request.studyType,
-            partner=partner,
+            partner=candidates[0],
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Crew execution failed: {str(e)}")
 
     return result
+
+
+# ─── Yeni streaming endpoint — top-3 SSE ───
+@app.post("/api/match/stream")
+async def match_partner_stream(request: MatchRequest):
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set in .env")
+
+    candidates = find_top_candidates(request, n=3)
+    if not candidates:
+        raise HTTPException(status_code=404, detail="No partners available in mock data")
+
+    async def generate():
+        for rank, partner in enumerate(candidates, start=1):
+            # Her crew çağrısı blocking — thread pool'da çalıştır, event loop'u bloke etme
+            try:
+                result = await asyncio.to_thread(
+                    run_crew,
+                    course=request.course,
+                    level=request.level,
+                    preferred_time=request.preferredTime,
+                    study_type=request.studyType,
+                    partner=partner,
+                )
+                result["rank"] = rank
+                payload = json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                payload = json.dumps({"error": str(e), "rank": rank}, ensure_ascii=False)
+
+            yield f"data: {payload}\n\n"
+
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @app.get("/health")
