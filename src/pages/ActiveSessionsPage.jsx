@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import tr from '../i18n'
 
@@ -13,8 +14,24 @@ function translateSession(session) {
   }
 }
 
-function ActiveSessionsPage({ matches }) {
+function ActiveSessionsPage({ matches, setMatches }) {
+  // primaryIndex: hangi partner "Ana Partner" seçilmiş (null = seçilmedi)
+  const [primaryIndex, setPrimaryIndex] = useState(() => {
+    const saved = localStorage.getItem('sp_primary')
+    return saved !== null ? Number(saved) : null
+  })
+
   const sessions = matches.map(translateSession)
+
+  const handleSetPrimary = (idx) => {
+    const newVal = primaryIndex === idx ? null : idx
+    setPrimaryIndex(newVal)
+    if (newVal === null) {
+      localStorage.removeItem('sp_primary')
+    } else {
+      localStorage.setItem('sp_primary', String(newVal))
+    }
+  }
 
   return (
     <section className="card">
@@ -31,9 +48,23 @@ function ActiveSessionsPage({ matches }) {
         <>
           <p>{t.subtitle}</p>
           <ul className="result-list">
-            {sessions.map((s) => (
-              <li key={s.name}>
-                <strong>{s.name}</strong> — {s.course}, {s.levelLabel}, {s.timeLabel}, {s.typeLabel}
+            {sessions.map((s, idx) => (
+              <li key={s.name} className={`session-item${primaryIndex === idx ? ' primary' : ''}`}>
+                <div className="session-info">
+                  {primaryIndex === idx && (
+                    <span className="primary-badge">{t.primaryBadge}</span>
+                  )}
+                  <strong>{s.name}</strong>
+                  <span className="session-meta">
+                    {s.course} · {s.levelLabel} · {s.timeLabel} · {s.typeLabel}
+                  </span>
+                </div>
+                <button
+                  className={`set-primary-btn${primaryIndex === idx ? ' active' : ''}`}
+                  onClick={() => handleSetPrimary(idx)}
+                >
+                  {primaryIndex === idx ? '⭐' : t.setPrimary}
+                </button>
               </li>
             ))}
           </ul>

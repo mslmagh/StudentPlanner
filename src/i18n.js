@@ -16,7 +16,7 @@ const tr = {
   home: {
     title: 'Doğru ders partnerini hızla bul',
     desc1:
-      'AI Ders Partneri Bulucu, ögrencilere yönelik akıllı bir eşleştirme platformudur. Ders, seviye, müsait olduğun zaman dilimi ve çalışma tarzını girerek sana en uygun partneri dakikalar içinde bulursun.',
+      'AI Ders Partneri Bulucu, öğrencilere yönelik akıllı bir eşleştirme platformudur. Ders, seviye, müsait olduğun zaman dilimi ve çalışma tarzını girerek sana en uygun partneri dakikalar içinde bulursun.',
     desc2:
       'AI versiyonu, CrewAI çok-ajanlı sistemi kullanır: Beceri Analizcisi, Uyumluluk Ajanı, Çalışma Planlayıcısı ve Maç Değerlendiricisi birlikte kişiselleştirilmiş eşleşmeler ve çalışma planları üretir.',
     cta: 'Partner Bulmaya Başla',
@@ -65,6 +65,8 @@ const tr = {
     ],
     submit: '🔍 Partner Bul',
     required: 'Lütfen ders adını girin.',
+    recentSearches: 'Son Aramalar',
+    clearHistory: 'Temizle',
   },
 
   matching: {
@@ -92,6 +94,12 @@ const tr = {
     studyPlan: '📅 1 Haftalık Çalışma Planı',
     evaluation: '⚖️ Değerlendirici Kararı',
     viewSessions: 'Aktif Oturumları Görüntüle',
+    rematch: '🔄 Farklı Partner Bul',
+    // MatchCard pill labels
+    pillCompat: 'Uyum',
+    pillOverall: 'Genel',
+    // Readable error from backend
+    serverError: 'Sunucu hatası oluştu. Lütfen tekrar dene.',
   },
 
   sessions: {
@@ -102,6 +110,14 @@ const tr = {
     level: { Beginner: 'Başlangıç', Intermediate: 'Orta', Advanced: 'İleri' },
     time: { Morning: 'Sabah', Afternoon: 'Öğleden Sonra', Evening: 'Akşam', Night: 'Gece' },
     type: { Online: 'Online', 'In-person': 'Yüz Yüze' },
+    primaryBadge: '⭐ Ana Partner',
+    setPrimary: 'Ana Partner Yap',
+  },
+
+  health: {
+    checking: 'Backend kontrol ediliyor...',
+    offline: '⚠️ Backend çevrimdışı — AI özellikleri devre dışı',
+    online: '✅ Backend bağlı',
   },
 }
 

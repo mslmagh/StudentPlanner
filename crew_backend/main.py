@@ -16,9 +16,15 @@ load_dotenv()
 
 app = FastAPI(title="Study Partner Crew API")
 
+# CORS origins: geliştirme için localhost + üretimde FRONTEND_ORIGIN env var'ı
+_origins = ["http://localhost:5173", "http://localhost:4173"]
+_extra = os.getenv("FRONTEND_ORIGIN")
+if _extra:
+    _origins.append(_extra)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:4173"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,14 +80,14 @@ def find_top_candidates(request: MatchRequest, n: int = 3) -> list[dict]:
     # Aynı puan grubu içinde karıştır — her seferinde farklı sıra
     result: list[dict] = []
     i = 0
-    while i < len(scored) and len(result) < n:
+    while i < int(len(scored)) and len(result) < n:
         same_score = [p for p, s in scored[i:] if s == scored[i][1]]
         random.shuffle(same_score)
         for p in same_score:
             result.append(p)
             if len(result) == n:
                 break
-        i += len(same_score)
+        i += int(len(same_score))
 
     # Yeterli partner yoksa rastgele tamamla
     if not result:
@@ -90,29 +96,6 @@ def find_top_candidates(request: MatchRequest, n: int = 3) -> list[dict]:
     return result[:n]
 
 
-# ─── Eski tekil endpoint (geriye dönük uyumluluk) ───
-@app.post("/api/match")
-async def match_partner(request: MatchRequest):
-    if not os.getenv("OPENAI_API_KEY"):
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set in .env")
-
-    candidates = find_top_candidates(request, n=1)
-    if not candidates:
-        raise HTTPException(status_code=404, detail="No partners available in mock data")
-
-    try:
-        result = await asyncio.to_thread(
-            run_crew,
-            course=request.course,
-            level=request.level,
-            preferred_time=request.preferredTime,
-            study_type=request.studyType,
-            partner=candidates[0],
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Crew execution failed: {str(e)}")
-
-    return result
 
 
 # ─── Yeni streaming endpoint — top-3 SSE ───

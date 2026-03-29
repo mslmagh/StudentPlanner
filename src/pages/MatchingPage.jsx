@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import tr from '../i18n'
+import { API_BASE } from '../config'
 
 const { matching: t } = tr
-const STREAM_URL = 'http://localhost:8000/api/match/stream'
+const STREAM_URL = `${API_BASE}/api/match/stream`
 
 /* ─── Puan rengini hesapla ─── */
 function scoreColor(score) {
@@ -51,11 +52,12 @@ function MatchCard({ match, rank, defaultOpen }) {
         </div>
 
         <div className="match-header-scores">
+          {/* i18n'den alınan pill etiketleri */}
           <span className={`score-pill ${scoreColor(match.compatibility_score)}`}>
-            Uyum {match.compatibility_score}/100
+            {t.pillCompat} {match.compatibility_score}/100
           </span>
           <span className={`score-pill ${scoreColor(match.overall_score)}`}>
-            Genel {match.overall_score}/100
+            {t.pillOverall} {match.overall_score}/100
           </span>
         </div>
 
@@ -108,16 +110,33 @@ function GhostCard({ rank }) {
   )
 }
 
+/* ─── Hata mesajını kullanıcı dostu hale getir ─── */
+function friendlyError(rawError) {
+  if (!rawError) return ''
+  // Backend 500 olduğunda "detail" anahtarı JSON içinde gelebilir
+  // Ancak bizim fetch zaten d.detail'i exception message'a koyuyor.
+  // "Internal Server Error" ya da çok uzun string ise basit mesaj göster.
+  if (
+    rawError.toLowerCase().includes('internal server error') ||
+    rawError.toLowerCase().includes('500') ||
+    rawError.length > 200
+  ) {
+    return t.serverError
+  }
+  return rawError
+}
+
 /* ─── Ana sayfa ─── */
-function MatchingPage({ request, setMatches }) {
-  const [matches, setLocalMatches] = useState([])   // gelen sonuçlar
-  const [nextRank, setNextRank] = useState(1)        // kaçıncı eşleşme bekleniyor
+function MatchingPage({ request, setMatches, setRequest }) {
+  const [matches, setLocalMatches] = useState([])
+  const [nextRank, setNextRank] = useState(1)
   const [isDone, setIsDone] = useState(false)
   const [error, setError] = useState(null)
   const abortRef = useRef(null)
+  const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!request) return
+  const startStream = (req) => {
+    if (!req) return
 
     // Sıfırla
     setLocalMatches([])
@@ -135,13 +154,17 @@ function MatchingPage({ request, setMatches }) {
         const res = await fetch(STREAM_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(request),
+          body: JSON.stringify(req),
           signal: controller.signal,
         })
 
         if (!res.ok) {
-          const d = await res.json()
-          throw new Error(d.detail || `HTTP ${res.status}`)
+          let msg = `HTTP ${res.status}`
+          try {
+            const d = await res.json()
+            msg = d.detail || msg
+          } catch { /* parse hatası */ }
+          throw new Error(msg)
         }
 
         const reader = res.body.getReader()
@@ -154,7 +177,7 @@ function MatchingPage({ request, setMatches }) {
 
           buffer += decoder.decode(value, { stream: true })
           const lines = buffer.split('\n')
-          buffer = lines.pop() ?? '' // Tamamlanmamış satırı tampona bırak
+          buffer = lines.pop() ?? ''
 
           for (const line of lines) {
             if (!line.startsWith('data: ')) continue
@@ -166,14 +189,12 @@ function MatchingPage({ request, setMatches }) {
             try {
               const match = JSON.parse(payload)
               if (match.error) {
-                // Tek bir eşleşme hatalıysa diğerleri devam eder
                 console.warn(`Rank ${match.rank} hatası:`, match.error)
                 setNextRank((p) => p + 1)
                 continue
               }
               setLocalMatches((prev) => {
                 const updated = [...prev, match]
-                // App.jsx'e tüm partnerleri bildir
                 setMatches(updated.map((m) => m.matched_partner))
                 return updated
               })
@@ -189,9 +210,25 @@ function MatchingPage({ request, setMatches }) {
         }
       }
     })()
+  }
 
-    return () => controller.abort()
+  useEffect(() => {
+    startStream(request)
+    return () => abortRef.current?.abort()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request])
+
+  // Yeniden eşleştir: aynı form verisiyle yeni stream başlat
+  const handleRematch = () => {
+    if (!request) return
+    // request ref'ini değişmeden bırak ama etkiyi tetikle:
+    setMatches([])
+    setLocalMatches([])
+    setNextRank(1)
+    setIsDone(false)
+    setError(null)
+    startStream(request)
+  }
 
   if (!request) return <Navigate to="/create-request" replace />
 
@@ -226,7 +263,7 @@ function MatchingPage({ request, setMatches }) {
       {/* Hata */}
       {error && (
         <div className="error-box">
-          <strong>{t.errorTitle}: </strong>{error}
+          <strong>{t.errorTitle}: </strong>{friendlyError(error)}
           <p>
             {t.errorHint} <code>{t.errorCmd}</code>
           </p>
@@ -253,10 +290,18 @@ function MatchingPage({ request, setMatches }) {
         </div>
       )}
 
-      {isDone && matches.length > 0 && (
-        <Link to="/active-sessions" className="primary-button inline-button">
-          {t.viewSessions}
-        </Link>
+      {/* Aksiyon butonları */}
+      {(isDone || error) && (
+        <div className="matching-actions">
+          <button className="secondary-button" onClick={handleRematch}>
+            {t.rematch}
+          </button>
+          {isDone && matches.length > 0 && (
+            <Link to="/active-sessions" className="primary-button inline-button">
+              {t.viewSessions}
+            </Link>
+          )}
+        </div>
       )}
     </section>
   )
