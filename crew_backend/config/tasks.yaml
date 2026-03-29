@@ -66,11 +66,14 @@ evaluation_task:
     3. Herhangi bir endişe veya kırmızı bayrak var mı?
     4. Genel eşleşme kalitesi puanı nedir (0-100)?
 
-    Özlü ol. En fazla 4 cümle.
+    ÖNEMLİ BİLGİ: Puanı HESAPLARKEN rastgele veya sürekli '85/100' gibi sabit değerler GİRMEYİN. 
+    Önceki uyumluluk analizini okuyun ve o puana paralel, inandırıcı ve adayın tam durumunu yansıtan bir 
+    Genel Puan (örneğin 42, 67, 91 vb.) belirleyin.
 
+    Özlü ol. En fazla 4 cümle.
     ÖNEMLI: Yanıtını yalnızca Türkçe olarak ver.
   expected_output: >
-    Genel bir eşleşme puanı (0-100) ve en fazla 4 cümle geri bildirim içeren
-    final değerlendirme. Format: "Genel Puan: XX/100. [geri bildirim]."
+    Gerçekten düşünülmüş bir genel eşleşme puanı (0-100) ve en fazla 4 cümle geri bildirim içeren
+    final değerlendirme. Format kesinlikle: "Genel Puan: XX/100. [geri bildirim]."
     Türkçe yazılmış olmalı.
   agent: match_evaluator

@@ -1196,3 +1196,65 @@ input:focus, select:focus {
   font-size: 0.85rem;
   box-shadow: none;
 }
+
+/* ─── Matching Page Filters ──────────────────────────────────────────────────── */
+.filters-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--result-item-bg);
+  padding: 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--result-item-border);
+  animation: fadeUp 0.3s ease both;
+}
+
+@media (min-width: 640px) {
+  .filters-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-pill {
+  padding: 0.35rem 0.8rem;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.filter-pill:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.filter-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}

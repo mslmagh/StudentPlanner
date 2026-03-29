@@ -132,6 +132,11 @@ function MatchingPage({ request, setMatches, setRequest }) {
   const [nextRank, setNextRank] = useState(1)
   const [isDone, setIsDone] = useState(false)
   const [error, setError] = useState(null)
+  
+  // Filtre durumları
+  const [filterType, setFilterType] = useState('All')
+  const [filterLevel, setFilterLevel] = useState('All')
+
   const abortRef = useRef(null)
   const navigate = useNavigate()
 
@@ -143,6 +148,8 @@ function MatchingPage({ request, setMatches, setRequest }) {
     setNextRank(1)
     setIsDone(false)
     setError(null)
+    setFilterType('All')
+    setFilterLevel('All')
 
     // Önceki isteği iptal et
     if (abortRef.current) abortRef.current.abort()
@@ -236,6 +243,19 @@ function MatchingPage({ request, setMatches, setRequest }) {
   const isStreaming = !isDone && !error
   const TOTAL = 3
 
+  // ─── Eşleşmeleri Filtrele ve Sırala ───
+  const filteredMatches = matches.filter((m) => {
+    const p = m.matched_partner || {}
+    if (filterType !== 'All' && p.studyType !== filterType) return false
+    if (filterLevel !== 'All' && p.level !== filterLevel) return false
+    return true
+  })
+
+  // Uyumluluk puanına göre BÜYÜKTEN KÜÇÜĞE sırala
+  const sortedMatches = [...filteredMatches].sort((a, b) => {
+    return (b.compatibility_score || 0) - (a.compatibility_score || 0)
+  })
+
   return (
     <section className="card">
       <h2>{t.title}</h2>
@@ -271,15 +291,34 @@ function MatchingPage({ request, setMatches, setRequest }) {
         </div>
       )}
 
+      {/* Filtreleme Barları (Eşleşmeler Varken Görünsün) */}
+      {matches.length > 0 && (
+        <div className="filters-container">
+          <div className="filter-group">
+            <span className="filter-label">Tür:</span>
+            <button className={`filter-pill ${filterType === 'All' ? 'active' : ''}`} onClick={() => setFilterType('All')}>Tümü</button>
+            <button className={`filter-pill ${filterType === 'Online' ? 'active' : ''}`} onClick={() => setFilterType('Online')}>Online</button>
+            <button className={`filter-pill ${filterType === 'In-person' ? 'active' : ''}`} onClick={() => setFilterType('In-person')}>Yüz Yüze</button>
+          </div>
+          <div className="filter-group">
+            <span className="filter-label">Seviye:</span>
+            <button className={`filter-pill ${filterLevel === 'All' ? 'active' : ''}`} onClick={() => setFilterLevel('All')}>Tümü</button>
+            <button className={`filter-pill ${filterLevel === 'Beginner' ? 'active' : ''}`} onClick={() => setFilterLevel('Beginner')}>Beginner</button>
+            <button className={`filter-pill ${filterLevel === 'Intermediate' ? 'active' : ''}`} onClick={() => setFilterLevel('Intermediate')}>Intermediate</button>
+            <button className={`filter-pill ${filterLevel === 'Advanced' ? 'active' : ''}`} onClick={() => setFilterLevel('Advanced')}>Advanced</button>
+          </div>
+        </div>
+      )}
+
       {/* Match kartları */}
       {matches.length > 0 && (
         <div className="matches-list">
-          {matches.map((match) => (
+          {sortedMatches.map((match, idx) => (
             <MatchCard
-              key={match.rank}
+              key={match.rank} // VDOM takibi için orjinal rank
               match={match}
-              rank={match.rank}
-              defaultOpen={match.rank === 1}
+              rank={idx + 1} // Görsel gösterim için sıralı numara
+              defaultOpen={idx === 0}
             />
           ))}
 
