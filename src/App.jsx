@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import CreateRequestPage from './pages/CreateRequestPage'
 import MatchingPage from './pages/MatchingPage'
 import ActiveSessionsPage from './pages/ActiveSessionsPage'
+import SessionRoomPage from './pages/SessionRoomPage'
 import { API_BASE } from './config'
 import tr from './i18n'
 
@@ -131,6 +132,7 @@ function App() {
             path="/active-sessions"
             element={<ActiveSessionsPage matches={matches} setMatches={setMatches} />}
           />
+          <Route path="/session/:partnerName" element={<SessionRoomPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

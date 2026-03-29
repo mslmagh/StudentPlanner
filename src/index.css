@@ -972,3 +972,227 @@ input:focus, select:focus {
   font-size: 0.88rem;
   border-radius: 0.6rem;
 }
+
+/* ─── Mock Video Session Room ────────────────────────────────────────────────── */
+.session-room-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+}
+
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.session-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.live-dot {
+  width: 10px;
+  height: 10px;
+  background-color: var(--error-text);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.session-timer {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  background: var(--primary-soft);
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  flex: 1;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .video-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.video-box {
+  background: var(--input-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 2.5rem;
+  font-weight: 800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.cam-placeholder {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.video-label {
+  position: absolute;
+  bottom: 0.8rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.session-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.control-btn {
+  padding: 0.75rem 1.2rem;
+  border: none;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.control-btn:hover {
+  filter: brightness(0.9);
+}
+
+.control-btn.off {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+.control-btn.end-call {
+  background: var(--error-text);
+  color: #fff;
+}
+
+/* ─── Mock Chat Box ──────────────────────────────────────────────────────────── */
+.active-chat-btn {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+
+.chat-box {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 0.8rem;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 250px;
+  overflow: hidden;
+  animation: fadeUp 0.3s ease both;
+}
+
+.chat-history {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--input-bg);
+}
+
+.chat-bubble-wrap {
+  display: flex;
+  width: 100%;
+}
+
+.chat-bubble-wrap.me {
+  justify-content: flex-end;
+}
+
+.chat-bubble-wrap.partner {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.me .chat-bubble {
+  background: var(--primary-strong);
+  color: #fff;
+  border-bottom-right-radius: 0.2rem;
+}
+
+.partner .chat-bubble {
+  background: var(--primary-soft);
+  color: var(--text-main);
+  border-bottom-left-radius: 0.2rem;
+}
+
+.chat-input-form {
+  display: flex;
+  padding: 0.6rem;
+  background: var(--card-bg);
+  border-top: 1px solid var(--card-border);
+  gap: 0.5rem;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--input-border);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  background: var(--input-bg);
+  color: var(--text-main);
+}
+
+.chat-send-btn {
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  box-shadow: none;
+}
