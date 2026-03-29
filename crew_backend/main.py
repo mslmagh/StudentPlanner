@@ -9,8 +9,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from crew import run_crew
+from database import Base, SessionLocal, engine, Partner
+
+Base.metadata.create_all(bind=engine)
 
 load_dotenv()
 
@@ -30,10 +34,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load mock partners from the React project's data file
-MOCK_PARTNERS_PATH = Path(__file__).parent.parent / "src" / "data" / "mockPartners.json"
-with open(MOCK_PARTNERS_PATH, "r", encoding="utf-8") as f:
-    ALL_PARTNERS = json.load(f)
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Seed database from mock file if empty
+def seed_database_if_empty(db: Session):
+    if db.query(Partner).first() is None:
+        mock_path = Path(__file__).parent.parent / "src" / "data" / "mockPartners.json"
+        if mock_path.exists():
+            with open(mock_path, "r", encoding="utf-8") as f:
+                partners_data = json.load(f)
+                for p in partners_data:
+                    # Ignore standard id if present
+                    db.add(Partner(
+                        name=p.get("name"),
+                        course=p.get("course"),
+                        level=p.get("level"),
+                        time=p.get("time"),
+                        studyType=p.get("studyType")
+                    ))
+            db.commit()
+
+# On startup, seed DB
+with SessionLocal() as db:
+    seed_database_if_empty(db)
 
 TIME_ORDER = ["Morning", "Afternoon", "Evening", "Night"]
 
@@ -69,12 +98,13 @@ def _partner_score(partner: dict, request: MatchRequest) -> int:
     return score
 
 
-def find_top_candidates(request: MatchRequest, n: int = 3) -> list[dict]:
+def find_top_candidates(request: MatchRequest, db: Session, n: int = 3) -> list[dict]:
     """
     Tüm partnerleri puanla, en yüksek n tanesini döndür.
     Aynı puana sahip adaylar arasında rastgele seçim yapılır (tekrarlı çalıştırmalarda çeşitlilik sağlar).
     """
-    scored = [(partner, _partner_score(partner, request)) for partner in ALL_PARTNERS]
+    all_partners = [p.to_dict() for p in db.query(Partner).all()]
+    scored = [(partner, _partner_score(partner, request)) for partner in all_partners]
     scored.sort(key=lambda x: x[1], reverse=True)
 
     # Aynı puan grubu içinde karıştır — her seferinde farklı sıra
@@ -90,8 +120,8 @@ def find_top_candidates(request: MatchRequest, n: int = 3) -> list[dict]:
         i += int(len(same_score))
 
     # Yeterli partner yoksa rastgele tamamla
-    if not result:
-        result = random.sample(ALL_PARTNERS, min(n, len(ALL_PARTNERS)))
+    if not result and all_partners:
+        result = random.sample(all_partners, min(n, len(all_partners)))
 
     return result[:n]
 
@@ -99,12 +129,14 @@ def find_top_candidates(request: MatchRequest, n: int = 3) -> list[dict]:
 
 
 # ─── Yeni streaming endpoint — top-3 SSE ───
+from fastapi import Depends
+
 @app.post("/api/match/stream")
-async def match_partner_stream(request: MatchRequest):
+async def match_partner_stream(request: MatchRequest, db: Session = Depends(get_db)):
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set in .env")
 
-    candidates = find_top_candidates(request, n=3)
+    candidates = find_top_candidates(request, db=db, n=3)
     if not candidates:
         raise HTTPException(status_code=404, detail="No partners available in mock data")
 

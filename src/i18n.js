@@ -112,6 +112,10 @@ const tr = {
     type: { Online: 'Online', 'In-person': 'Yüz Yüze' },
     primaryBadge: '⭐ Ana Partner',
     setPrimary: 'Ana Partner Yap',
+    planTitle: '1 Haftalık Çalışma Planı',
+    startSession: '🚀 Oturumu Başlat',
+    addToCalendar: '📅 Takvime Ekle',
+    sendMessage: '💬 Mesaj Gönder',
   },
 
   health: {

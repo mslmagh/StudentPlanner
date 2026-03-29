@@ -6,11 +6,14 @@ const { sessions: t } = tr
 
 // Değerleri Türkçe etiketlere çevirir
 function translateSession(session) {
+  // session raw objesi match verisiyle geliyorsa
+  const partner = session.matched_partner || session
   return {
     ...session,
-    levelLabel: t.level[session.level] ?? session.level,
-    timeLabel: t.time[session.time] ?? session.time,
-    typeLabel: t.type[session.studyType] ?? session.studyType,
+    partner,
+    levelLabel: t.level[partner.level] ?? partner.level,
+    timeLabel: t.time[partner.time] ?? partner.time,
+    typeLabel: t.type[partner.studyType] ?? partner.studyType,
   }
 }
 
@@ -49,22 +52,50 @@ function ActiveSessionsPage({ matches, setMatches }) {
           <p>{t.subtitle}</p>
           <ul className="result-list">
             {sessions.map((s, idx) => (
-              <li key={s.name} className={`session-item${primaryIndex === idx ? ' primary' : ''}`}>
-                <div className="session-info">
-                  {primaryIndex === idx && (
-                    <span className="primary-badge">{t.primaryBadge}</span>
-                  )}
-                  <strong>{s.name}</strong>
-                  <span className="session-meta">
-                    {s.course} · {s.levelLabel} · {s.timeLabel} · {s.typeLabel}
-                  </span>
+              <li key={idx} className={`session-item${primaryIndex === idx ? ' primary expanded' : ''}`}>
+                <div className="session-header-row">
+                  <div className="session-info">
+                    {primaryIndex === idx && (
+                      <span className="primary-badge">{t.primaryBadge}</span>
+                    )}
+                    <strong>{s.partner.name}</strong>
+                    <span className="session-meta">
+                      {s.partner.course} · {s.levelLabel} · {s.timeLabel} · {s.typeLabel}
+                    </span>
+                  </div>
+                  <button
+                    className={`set-primary-btn${primaryIndex === idx ? ' active' : ''}`}
+                    onClick={() => handleSetPrimary(idx)}
+                  >
+                    {primaryIndex === idx ? '⭐' : t.setPrimary}
+                  </button>
                 </div>
-                <button
-                  className={`set-primary-btn${primaryIndex === idx ? ' active' : ''}`}
-                  onClick={() => handleSetPrimary(idx)}
-                >
-                  {primaryIndex === idx ? '⭐' : t.setPrimary}
-                </button>
+
+                {primaryIndex === idx && (
+                  <div className="primary-actions-panel">
+                    {s.study_plan ? (
+                      <div className="study-plan-box">
+                        <h4>{t.planTitle}</h4>
+                        <div className="plan-text">{s.study_plan}</div>
+                      </div>
+                    ) : (
+                      <div className="study-plan-box empty">
+                         <em>Çalışma planı bulunamadı (eski kayıt).</em>
+                      </div>
+                    )}
+                    <div className="action-buttons">
+                      <button className="primary-button action-btn" onClick={() => alert(t.startSession + ' başlatılıyor...')}>
+                        {t.startSession}
+                      </button>
+                      <button className="secondary-button action-btn" onClick={() => alert(t.addToCalendar + ' eklendi!')}>
+                        {t.addToCalendar}
+                      </button>
+                      <button className="secondary-button action-btn" onClick={() => alert(t.sendMessage + ' açılıyor...')}>
+                        {t.sendMessage}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

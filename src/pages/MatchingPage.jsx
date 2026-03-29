@@ -195,7 +195,8 @@ function MatchingPage({ request, setMatches, setRequest }) {
               }
               setLocalMatches((prev) => {
                 const updated = [...prev, match]
-                setMatches(updated.map((m) => m.matched_partner))
+                // Bütün match objesini kaydediyoruz ki study_plan vs okunsun
+                setMatches(updated)
                 return updated
               })
               setNextRank(match.rank + 1)
