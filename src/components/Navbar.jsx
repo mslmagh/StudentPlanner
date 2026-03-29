@@ -1,27 +1,39 @@
 import { NavLink } from 'react-router-dom'
+import tr from '../i18n'
 
-const links = [
-  { to: '/', label: 'Home' },
-  { to: '/create-request', label: 'Create Request' },
-  { to: '/matching', label: 'Matching' },
-  { to: '/active-sessions', label: 'Active Sessions' },
+const navLinks = [
+  { to: '/', label: tr.nav.home, end: true },
+  { to: '/create-request', label: tr.nav.createRequest },
+  { to: '/matching', label: tr.nav.matching },
+  { to: '/active-sessions', label: tr.nav.activeSessions },
 ]
 
-function Navbar() {
+function Navbar({ darkMode, onToggleTheme }) {
   return (
     <header className="navbar">
-      <div className="brand">AI Study Partner Finder</div>
-      <nav className="nav-links">
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-          >
-            {link.label}
-          </NavLink>
-        ))}
-      </nav>
+      <NavLink to="/" className="brand">
+        {tr.nav.brand}
+      </NavLink>
+
+      <div className="nav-right">
+        <nav className="nav-links">
+          {navLinks.map(({ to, label, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <button className="theme-toggle" onClick={onToggleTheme} aria-label="Tema değiştir">
+          {darkMode ? '☀️' : '🌙'}
+          <span>{darkMode ? tr.nav.lightMode : tr.nav.darkMode}</span>
+        </button>
+      </div>
     </header>
   )
 }

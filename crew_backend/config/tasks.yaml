@@ -1,0 +1,67 @@
+analyze_skills_task:
+  description: >
+    Analyze the following student study request and produce a skill profile:
+    - Course: {course}
+    - Level: {level}
+    - Preferred Time: {preferred_time}
+    - Study Type: {study_type}
+
+    Identify: (1) the key skills required for this course at this level, 
+    (2) likely knowledge gaps for a {level} student, 
+    (3) what kind of study partner would benefit them most.
+    Keep your analysis concise — 3 to 5 bullet points.
+  expected_output: >
+    A short skill profile with 3-5 bullet points covering required skills, 
+    likely gaps, and ideal partner profile.
+  agent: skill_analyzer
+
+compatibility_task:
+  description: >
+    Evaluate the compatibility between the requesting student and this 
+    candidate partner:
+
+    Requesting student: Course={course}, Level={level}, Time={preferred_time}, 
+    Type={study_type}
+    
+    Candidate partner: {partner_profile}
+
+    Score compatibility from 0 to 100 and explain the top 2 reasons 
+    for or against this match. Be specific.
+  expected_output: >
+    A compatibility score (integer 0-100) and 2 sentences explaining 
+    the key reasons for the score. Format: "Score: XX/100. [reason 1]. [reason 2]."
+  agent: compatibility_agent
+
+study_planning_task:
+  description: >
+    Design a 1-week study plan for this matched pair:
+    - Course: {course}
+    - Level: {level}
+    - Available time slot: {preferred_time}
+    - Study format: {study_type}
+
+    The plan should have 5 sessions across the week. Each session should 
+    have a day, duration (45-90 min), and a specific topic or activity. 
+    Keep it practical and motivating.
+  expected_output: >
+    A 1-week study plan with 5 sessions. Each session has: Day, Duration, 
+    Topic/Activity. Plain text format, no markdown headers.
+  agent: study_planner
+
+evaluation_task:
+  description: >
+    Review the skill analysis, compatibility assessment, and study plan 
+    produced for this match request (Course: {course}, Level: {level}) 
+    and provide a final quality evaluation.
+
+    Check:
+    1. Is the compatibility score justified?
+    2. Is the study plan realistic for a {level} student?
+    3. Are there any red flags or concerns?
+    4. What is the overall match quality score (0-100)?
+
+    Be concise. Max 4 sentences.
+  expected_output: >
+    A final evaluation with an overall match score (0-100) and max 4 sentences 
+    of feedback. Format: "Overall Score: XX/100. [feedback]."
+  agent: match_evaluator

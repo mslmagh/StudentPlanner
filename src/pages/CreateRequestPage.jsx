@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import tr from '../i18n'
+
+const { create: t } = tr
 
 const initialForm = {
   course: '',
@@ -12,16 +15,14 @@ function CreateRequestPage({ setRequest, setMatches }) {
   const [form, setForm] = useState(initialForm)
   const navigate = useNavigate()
 
-  const onChange = (event) => {
-    const { name, value } = event.target
+  const onChange = (e) => {
+    const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const onSubmit = (event) => {
-    event.preventDefault()
-    if (!form.course.trim()) {
-      return
-    }
+  const onSubmit = (e) => {
+    e.preventDefault()
+    if (!form.course.trim()) return
 
     setRequest({
       course: form.course.trim(),
@@ -35,14 +36,16 @@ function CreateRequestPage({ setRequest, setMatches }) {
 
   return (
     <section className="card">
-      <h2>Create Study Request</h2>
+      <h2>{t.title}</h2>
+      <p className="form-subtitle">{t.subtitle}</p>
+
       <form className="request-form" onSubmit={onSubmit}>
         <label>
-          Course
+          {t.courseLabel}
           <input
             name="course"
             type="text"
-            placeholder="e.g. Calculus"
+            placeholder={t.coursePlaceholder}
             value={form.course}
             onChange={onChange}
             required
@@ -50,34 +53,34 @@ function CreateRequestPage({ setRequest, setMatches }) {
         </label>
 
         <label>
-          Level
+          {t.levelLabel}
           <select name="level" value={form.level} onChange={onChange}>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
+            {t.levels.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
         </label>
 
         <label>
-          Preferred Time
+          {t.timeLabel}
           <select name="preferredTime" value={form.preferredTime} onChange={onChange}>
-            <option value="Morning">Morning</option>
-            <option value="Afternoon">Afternoon</option>
-            <option value="Evening">Evening</option>
-            <option value="Night">Night</option>
+            {t.times.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
         </label>
 
         <label>
-          Study Type
+          {t.typeLabel}
           <select name="studyType" value={form.studyType} onChange={onChange}>
-            <option value="Online">Online</option>
-            <option value="In-person">In-person</option>
+            {t.types.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
         </label>
 
         <button type="submit" className="primary-button">
-          Submit Request
+          {t.submit}
         </button>
       </form>
     </section>
