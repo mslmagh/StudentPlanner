@@ -1,67 +1,76 @@
 analyze_skills_task:
   description: >
-    Analyze the following student study request and produce a skill profile:
-    - Course: {course}
-    - Level: {level}
-    - Preferred Time: {preferred_time}
-    - Study Type: {study_type}
+    Aşağıdaki öğrencinin ders çalışma talebini analiz et ve bir beceri profili oluştur:
+    - Ders: {course}
+    - Seviye: {level}
+    - Tercih Edilen Zaman: {preferred_time}
+    - Çalışma Türü: {study_type}
 
-    Identify: (1) the key skills required for this course at this level, 
-    (2) likely knowledge gaps for a {level} student, 
-    (3) what kind of study partner would benefit them most.
-    Keep your analysis concise — 3 to 5 bullet points.
+    Şunları belirle: (1) Bu derste bu seviyede gereken temel beceriler,
+    (2) {level} seviyesindeki bir öğrencinin olası bilgi eksiklikleri,
+    (3) Bu öğrenciye en çok fayda sağlayacak partner profili.
+    Analizini kısa tut — 3 ila 5 madde.
+
+    ÖNEMLI: Yanıtını yalnızca Türkçe olarak ver.
   expected_output: >
-    A short skill profile with 3-5 bullet points covering required skills, 
-    likely gaps, and ideal partner profile.
+    Gerekli beceriler, olası eksiklikler ve ideal partner profilini kapsayan
+    3-5 maddelik kısa bir beceri profili. Türkçe yazılmış olmalı.
   agent: skill_analyzer
 
 compatibility_task:
   description: >
-    Evaluate the compatibility between the requesting student and this 
-    candidate partner:
+    Talepte bulunan öğrenci ile aday partner arasındaki uyumu değerlendir:
 
-    Requesting student: Course={course}, Level={level}, Time={preferred_time}, 
-    Type={study_type}
-    
-    Candidate partner: {partner_profile}
+    İstek sahibi öğrenci: Ders={course}, Seviye={level},
+    Zaman={preferred_time}, Tür={study_type}
 
-    Score compatibility from 0 to 100 and explain the top 2 reasons 
-    for or against this match. Be specific.
+    Aday partner: {partner_profile}
+
+    Uyumu 0 ile 100 arasında puanla ve bu eşleşme için ya da aleyhine
+    olan en önemli 2 nedeni açıkla. Somut ol.
+
+    ÖNEMLI: Yanıtını yalnızca Türkçe olarak ver.
   expected_output: >
-    A compatibility score (integer 0-100) and 2 sentences explaining 
-    the key reasons for the score. Format: "Score: XX/100. [reason 1]. [reason 2]."
+    Bir uyumluluk puanı (0-100 arası tam sayı) ve puanın temel nedenlerini
+    açıklayan 2 cümle. Format: "Puan: XX/100. [neden 1]. [neden 2]."
+    Türkçe yazılmış olmalı.
   agent: compatibility_agent
 
 study_planning_task:
   description: >
-    Design a 1-week study plan for this matched pair:
-    - Course: {course}
-    - Level: {level}
-    - Available time slot: {preferred_time}
-    - Study format: {study_type}
+    Bu eşleşmiş çift için 1 haftalık bir çalışma planı tasarla:
+    - Ders: {course}
+    - Seviye: {level}
+    - Müsait zaman dilimi: {preferred_time}
+    - Çalışma formatı: {study_type}
 
-    The plan should have 5 sessions across the week. Each session should 
-    have a day, duration (45-90 min), and a specific topic or activity. 
-    Keep it practical and motivating.
+    Plan haftada 5 oturum içermeli. Her oturumda gün, süre (45-90 dk)
+    ve belirli bir konu veya etkinlik olmalı. Pratik ve motive edici tut.
+
+    ÖNEMLI: Yanıtını yalnızca Türkçe olarak ver.
   expected_output: >
-    A 1-week study plan with 5 sessions. Each session has: Day, Duration, 
-    Topic/Activity. Plain text format, no markdown headers.
+    5 oturumlu 1 haftalık çalışma planı. Her oturumda: Gün, Süre,
+    Konu/Etkinlik bulunur. Düz metin formatı, başlık işaretleri yok.
+    Türkçe yazılmış olmalı.
   agent: study_planner
 
 evaluation_task:
   description: >
-    Review the skill analysis, compatibility assessment, and study plan 
-    produced for this match request (Course: {course}, Level: {level}) 
-    and provide a final quality evaluation.
+    Bu eşleştirme talebi için üretilen beceri analizi, uyumluluk değerlendirmesi
+    ve çalışma planını incele (Ders: {course}, Seviye: {level}) ve final
+    kalite değerlendirmesi yap.
 
-    Check:
-    1. Is the compatibility score justified?
-    2. Is the study plan realistic for a {level} student?
-    3. Are there any red flags or concerns?
-    4. What is the overall match quality score (0-100)?
+    Kontrol et:
+    1. Uyumluluk puanı haklı mı?
+    2. Çalışma planı {level} seviyesindeki bir öğrenci için gerçekçi mi?
+    3. Herhangi bir endişe veya kırmızı bayrak var mı?
+    4. Genel eşleşme kalitesi puanı nedir (0-100)?
 
-    Be concise. Max 4 sentences.
+    Özlü ol. En fazla 4 cümle.
+
+    ÖNEMLI: Yanıtını yalnızca Türkçe olarak ver.
   expected_output: >
-    A final evaluation with an overall match score (0-100) and max 4 sentences 
-    of feedback. Format: "Overall Score: XX/100. [feedback]."
+    Genel bir eşleşme puanı (0-100) ve en fazla 4 cümle geri bildirim içeren
+    final değerlendirme. Format: "Genel Puan: XX/100. [geri bildirim]."
+    Türkçe yazılmış olmalı.
   agent: match_evaluator

@@ -1,32 +1,45 @@
 [
-  { "name": "Ali", "course": "Calculus", "level": "Beginner", "time": "Evening", "studyType": "Online" },
-  { "name": "Ayşe", "course": "Calculus", "level": "Beginner", "time": "Evening", "studyType": "In-person" },
-  { "name": "Mert", "course": "Physics", "level": "Intermediate", "time": "Afternoon", "studyType": "Online" },
-  { "name": "Zeynep", "course": "Algorithms", "level": "Advanced", "time": "Night", "studyType": "Online" },
-  { "name": "Elif", "course": "Calculus", "level": "Beginner", "time": "Night", "studyType": "Online" },
-  { "name": "Kerem", "course": "Calculus", "level": "Beginner", "time": "Afternoon", "studyType": "In-person" },
-  { "name": "Burak", "course": "Physics", "level": "Beginner", "time": "Morning", "studyType": "Online" },
-  { "name": "Selin", "course": "Physics", "level": "Advanced", "time": "Evening", "studyType": "Online" },
-  { "name": "Emre", "course": "Algorithms", "level": "Intermediate", "time": "Afternoon", "studyType": "Online" },
-  { "name": "Fatma", "course": "Algorithms", "level": "Beginner", "time": "Morning", "studyType": "In-person" },
-  { "name": "Hasan", "course": "Linear Algebra", "level": "Intermediate", "time": "Evening", "studyType": "Online" },
-  { "name": "Neslihan", "course": "Linear Algebra", "level": "Beginner", "time": "Afternoon", "studyType": "In-person" },
-  { "name": "Ozan", "course": "Linear Algebra", "level": "Advanced", "time": "Night", "studyType": "Online" },
-  { "name": "Gizem", "course": "Statistics", "level": "Intermediate", "time": "Morning", "studyType": "Online" },
-  { "name": "Tarık", "course": "Statistics", "level": "Beginner", "time": "Evening", "studyType": "In-person" },
-  { "name": "İrem", "course": "Statistics", "level": "Advanced", "time": "Afternoon", "studyType": "Online" },
-  { "name": "Yusuf", "course": "Data Structures", "level": "Intermediate", "time": "Night", "studyType": "Online" },
-  { "name": "Deniz", "course": "Data Structures", "level": "Beginner", "time": "Morning", "studyType": "In-person" },
-  { "name": "Merve", "course": "Data Structures", "level": "Advanced", "time": "Evening", "studyType": "Online" },
-  { "name": "Baran", "course": "Machine Learning", "level": "Intermediate", "time": "Afternoon", "studyType": "Online" },
-  { "name": "Pınar", "course": "Machine Learning", "level": "Advanced", "time": "Night", "studyType": "Online" },
-  { "name": "Serhat", "course": "Machine Learning", "level": "Beginner", "time": "Morning", "studyType": "In-person" },
-  { "name": "Ece", "course": "Discrete Mathematics", "level": "Intermediate", "time": "Evening", "studyType": "Online" },
-  { "name": "Umut", "course": "Discrete Mathematics", "level": "Beginner", "time": "Afternoon", "studyType": "In-person" },
-  { "name": "Ceren", "course": "Operating Systems", "level": "Advanced", "time": "Night", "studyType": "Online" },
-  { "name": "Kaan", "course": "Operating Systems", "level": "Intermediate", "time": "Morning", "studyType": "Online" },
-  { "name": "Tuğba", "course": "Database Systems", "level": "Intermediate", "time": "Evening", "studyType": "In-person" },
-  { "name": "Musa", "course": "Database Systems", "level": "Beginner", "time": "Afternoon", "studyType": "Online" },
-  { "name": "Şevval", "course": "Computer Networks", "level": "Intermediate", "time": "Morning", "studyType": "Online" },
-  { "name": "Arda", "course": "Computer Networks", "level": "Advanced", "time": "Night", "studyType": "Online" }
+  { "name": "Ali", "course": "Matematik", "level": "Beginner", "time": "Evening", "studyType": "Online" },
+  { "name": "Ayşe", "course": "Matematik", "level": "Beginner", "time": "Evening", "studyType": "In-person" },
+  { "name": "Elif", "course": "Matematik", "level": "Beginner", "time": "Night", "studyType": "Online" },
+  { "name": "Kerem", "course": "Matematik", "level": "Beginner", "time": "Afternoon", "studyType": "In-person" },
+  { "name": "Zehra", "course": "Matematik", "level": "Intermediate", "time": "Morning", "studyType": "Online" },
+  { "name": "Yiğit", "course": "Matematik", "level": "Advanced", "time": "Night", "studyType": "Online" },
+
+  { "name": "Mert", "course": "Fizik", "level": "Intermediate", "time": "Afternoon", "studyType": "Online" },
+  { "name": "Burak", "course": "Fizik", "level": "Beginner", "time": "Morning", "studyType": "Online" },
+  { "name": "Selin", "course": "Fizik", "level": "Advanced", "time": "Evening", "studyType": "Online" },
+  { "name": "Rüya", "course": "Fizik", "level": "Beginner", "time": "Afternoon", "studyType": "In-person" },
+
+  { "name": "Zeynep", "course": "Algoritmalar", "level": "Advanced", "time": "Night", "studyType": "Online" },
+  { "name": "Emre", "course": "Algoritmalar", "level": "Intermediate", "time": "Afternoon", "studyType": "Online" },
+  { "name": "Fatma", "course": "Algoritmalar", "level": "Beginner", "time": "Morning", "studyType": "In-person" },
+
+  { "name": "Hasan", "course": "Lineer Cebir", "level": "Intermediate", "time": "Evening", "studyType": "Online" },
+  { "name": "Neslihan", "course": "Lineer Cebir", "level": "Beginner", "time": "Afternoon", "studyType": "In-person" },
+  { "name": "Ozan", "course": "Lineer Cebir", "level": "Advanced", "time": "Night", "studyType": "Online" },
+
+  { "name": "Gizem", "course": "İstatistik", "level": "Intermediate", "time": "Morning", "studyType": "Online" },
+  { "name": "Tarık", "course": "İstatistik", "level": "Beginner", "time": "Evening", "studyType": "In-person" },
+  { "name": "İrem", "course": "İstatistik", "level": "Advanced", "time": "Afternoon", "studyType": "Online" },
+
+  { "name": "Yusuf", "course": "Veri Yapıları", "level": "Intermediate", "time": "Night", "studyType": "Online" },
+  { "name": "Deniz", "course": "Veri Yapıları", "level": "Beginner", "time": "Morning", "studyType": "In-person" },
+  { "name": "Merve", "course": "Veri Yapıları", "level": "Advanced", "time": "Evening", "studyType": "Online" },
+
+  { "name": "Baran", "course": "Makine Öğrenmesi", "level": "Intermediate", "time": "Afternoon", "studyType": "Online" },
+  { "name": "Pınar", "course": "Makine Öğrenmesi", "level": "Advanced", "time": "Night", "studyType": "Online" },
+  { "name": "Serhat", "course": "Makine Öğrenmesi", "level": "Beginner", "time": "Morning", "studyType": "In-person" },
+
+  { "name": "Ece", "course": "Ayrık Matematik", "level": "Intermediate", "time": "Evening", "studyType": "Online" },
+  { "name": "Umut", "course": "Ayrık Matematik", "level": "Beginner", "time": "Afternoon", "studyType": "In-person" },
+
+  { "name": "Ceren", "course": "İşletim Sistemleri", "level": "Advanced", "time": "Night", "studyType": "Online" },
+  { "name": "Kaan", "course": "İşletim Sistemleri", "level": "Intermediate", "time": "Morning", "studyType": "Online" },
+
+  { "name": "Tuğba", "course": "Veritabanı Sistemleri", "level": "Intermediate", "time": "Evening", "studyType": "In-person" },
+  { "name": "Musa", "course": "Veritabanı Sistemleri", "level": "Beginner", "time": "Afternoon", "studyType": "Online" },
+
+  { "name": "Şevval", "course": "Bilgisayar Ağları", "level": "Intermediate", "time": "Morning", "studyType": "Online" },
+  { "name": "Arda", "course": "Bilgisayar Ağları", "level": "Advanced", "time": "Night", "studyType": "Online" }
 ]

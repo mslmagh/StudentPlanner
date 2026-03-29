@@ -1,16 +1,4 @@
 [
-  {
-    "name": "Ali",
-    "course": "Calculus",
-    "level": "Beginner",
-    "time": "Evening",
-    "studyType": "Online"
-  },
-  {
-    "name": "Mert",
-    "course": "Physics",
-    "level": "Intermediate",
-    "time": "Afternoon",
-    "studyType": "Online"
-  }
+  { "name": "Ali", "course": "Matematik", "level": "Beginner", "time": "Evening", "studyType": "Online" },
+  { "name": "Mert", "course": "Fizik", "level": "Intermediate", "time": "Afternoon", "studyType": "Online" }
 ]

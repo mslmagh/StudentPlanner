@@ -42,14 +42,12 @@ function CreateRequestPage({ setRequest, setMatches }) {
       <form className="request-form" onSubmit={onSubmit}>
         <label>
           {t.courseLabel}
-          <input
-            name="course"
-            type="text"
-            placeholder={t.coursePlaceholder}
-            value={form.course}
-            onChange={onChange}
-            required
-          />
+          <select name="course" value={form.course} onChange={onChange} required>
+            <option value="" disabled>{t.coursePlaceholder}</option>
+            {t.courses.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </label>
 
         <label>

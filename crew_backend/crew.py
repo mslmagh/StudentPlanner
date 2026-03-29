@@ -1,4 +1,5 @@
 import json
+import re
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
@@ -64,6 +65,17 @@ class StudyPartnerCrew:
         )
 
 
+def _parse_score(text: str) -> int:
+    """
+    XX/100 formatındaki ilk sayıyı yakalar.
+    "Puan: 85/100" veya "Score: 85/100" veya "Genel Puan: 90/100" hepsini destekler.
+    """
+    match = re.search(r'(\d{1,3})/100', text)
+    if match:
+        return min(int(match.group(1)), 100)
+    return 0
+
+
 def run_crew(course: str, level: str, preferred_time: str, study_type: str, partner: dict) -> dict:
     """
     Run the Study Partner Crew and return structured results.
@@ -92,27 +104,8 @@ def run_crew(course: str, level: str, preferred_time: str, study_type: str, part
     study_plan = task_outputs[2].raw if len(task_outputs) > 2 else ""
     evaluation_raw = task_outputs[3].raw if len(task_outputs) > 3 else ""
 
-    # Parse compatibility score from text "Score: XX/100..."
-    compatibility_score = 0
-    try:
-        for token in compatibility_raw.split():
-            token_clean = token.replace("/100", "").replace(".", "").strip()
-            if token_clean.isdigit():
-                compatibility_score = int(token_clean)
-                break
-    except Exception:
-        compatibility_score = 0
-
-    # Parse overall score from evaluation "Overall Score: XX/100..."
-    overall_score = 0
-    try:
-        for token in evaluation_raw.split():
-            token_clean = token.replace("/100", "").replace(".", "").strip()
-            if token_clean.isdigit():
-                overall_score = int(token_clean)
-                break
-    except Exception:
-        overall_score = 0
+    compatibility_score = _parse_score(compatibility_raw)
+    overall_score = _parse_score(evaluation_raw)
 
     return {
         "matched_partner": partner,
