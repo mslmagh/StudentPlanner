@@ -103,8 +103,8 @@ const tr = {
   },
 
   sessions: {
-    title: 'Aktif Oturumlar',
-    subtitle: 'AI tarafından eşleştirilen partnerleriniz:',
+    title: 'Adaylar & Aktif Oturumlar',
+    subtitle: 'Aşağıda en son yaptığınız aramadan dönen adaylar yer alıyor. Bir adayı "Ana Partner Yap"arak kendisiyle aktif bir oturum başlatabilir ve programına erişebilirsiniz.',
     empty: 'Henüz aktif oturumunuz yok. Partner bulmak için istek oluşturun.',
     createLink: 'İstek Oluştur',
     level: { Beginner: 'Başlangıç', Intermediate: 'Orta', Advanced: 'İleri' },

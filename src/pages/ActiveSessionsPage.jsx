@@ -1,8 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import tr from '../i18n'
+import { getOnlineStatus } from './MatchingPage'
 
-const { sessions: t } = tr
+const { sessions: t, matching: mt } = tr
+
+function scoreColor(score) {
+  return score >= 75 ? 'green' : score >= 50 ? 'yellow' : 'red'
+}
 
 // Değerleri Türkçe etiketlere çevirir
 function translateSession(session) {
@@ -52,6 +57,24 @@ function ActiveSessionsPage({ matches, setMatches }) {
   const [chatInput, setChatInput] = useState('')
   const chatEndRef = useRef(null)
 
+  // Session Approval State
+  const [approvalState, setApprovalState] = useState({ idx: null, status: 'idle' })
+
+  const handleStartSession = (idx, partnerName) => {
+    if (approvalState.status === 'waiting') return
+
+    if (approvalState.status === 'idle' || approvalState.idx !== idx) {
+      setApprovalState({ idx, status: 'waiting' })
+      setTimeout(() => {
+        setApprovalState({ idx, status: 'approved' })
+      }, 3500) // 3.5 sn bekleme simülasyonu
+    } else if (approvalState.status === 'approved' && approvalState.idx === idx) {
+      navigate(`/session/${partnerName}`)
+      // reset logic after nav if they go back
+      setTimeout(() => setApprovalState({ idx: null, status: 'idle' }), 1000)
+    }
+  }
+
   const handleOpenChat = () => {
     setChatOpen(!chatOpen)
     if (chatMessages.length === 0 && !chatOpen) {
@@ -97,10 +120,26 @@ function ActiveSessionsPage({ matches, setMatches }) {
                     {primaryIndex === idx && (
                       <span className="primary-badge">{t.primaryBadge}</span>
                     )}
-                    <strong>{s.partner.name}</strong>
+                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {s.partner.name}
+                      {(() => {
+                        const status = getOnlineStatus(s.partner.time)
+                        return <span className={`status-dot ${status.className}`}>{status.text}</span>
+                      })()}
+                    </strong>
                     <span className="session-meta">
                       {s.partner.course} · {s.levelLabel} · {s.timeLabel} · {s.typeLabel}
                     </span>
+                    {(s.compatibility_score != null && s.overall_score != null) && (
+                      <div className="session-header-scores">
+                        <span className={`score-pill ${scoreColor(s.compatibility_score)}`}>
+                          {mt.pillCompat} {s.compatibility_score}/100
+                        </span>
+                        <span className={`score-pill ${scoreColor(s.overall_score)}`}>
+                          {mt.pillOverall} {s.overall_score}/100
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <button
                     className={`set-primary-btn${primaryIndex === idx ? ' active' : ''}`}
@@ -123,8 +162,17 @@ function ActiveSessionsPage({ matches, setMatches }) {
                       </div>
                     )}
                     <div className="action-buttons">
-                      <button className="primary-button action-btn" onClick={() => navigate(`/session/${s.partner.name}`)}>
-                        {t.startSession}
+                      <button 
+                        className={`action-btn ${approvalState.idx === idx && approvalState.status === 'approved' ? 'success-button' : 'primary-button'}`}
+                        disabled={approvalState.idx === idx && approvalState.status === 'waiting'}
+                        style={approvalState.idx === idx && approvalState.status === 'waiting' ? { backgroundColor: 'var(--score-yellow)', color: '#222', opacity: 0.9, cursor: 'wait' } : {}}
+                        onClick={() => handleStartSession(idx, s.partner.name)}
+                      >
+                        {approvalState.idx === idx && approvalState.status === 'waiting' 
+                           ? '⏳ İstek Gönderildi, Bekleniyor...' 
+                           : approvalState.idx === idx && approvalState.status === 'approved'
+                           ? '✅ Partner Onayladı! Odaya Geç'
+                           : t.startSession}
                       </button>
                       <button className="secondary-button action-btn" onClick={() => handleAddToCalendar(s)}>
                         {t.addToCalendar}

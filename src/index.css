@@ -875,6 +875,13 @@ input:focus, select:focus {
   color: var(--text-muted);
 }
 
+.session-header-scores {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  flex-wrap: wrap;
+}
+
 .primary-badge {
   display: inline-flex;
   align-items: center;
@@ -1257,4 +1264,31 @@ input:focus, select:focus {
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
+}
+
+/* ─── Online Status Dot ──────────────────────────────────────────────────────── */
+.status-dot {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.status-dot.online {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.status-dot.offline {
+  color: var(--text-muted);
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+}
+
+[data-theme='dark'] .status-dot.online {
+  color: #34d399;
 }

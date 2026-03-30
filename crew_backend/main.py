@@ -100,10 +100,16 @@ def _partner_score(partner: dict, request: MatchRequest) -> int:
 
 def find_top_candidates(request: MatchRequest, db: Session, n: int = 3) -> list[dict]:
     """
-    Tüm partnerleri puanla, en yüksek n tanesini döndür.
-    Aynı puana sahip adaylar arasında rastgele seçim yapılır (tekrarlı çalıştırmalarda çeşitlilik sağlar).
+    Tüm partnerleri değil, sadece aynı dersi (course) ve aynı uygun vakti (preferredTime) 
+    seçmiş olan partnerleri bul ve puanla. Sadece gerçeğe (mantıklı olanlara) uygun adaylar çıkar.
     """
-    all_partners = [p.to_dict() for p in db.query(Partner).all()]
+    all_partners = [
+        p.to_dict() for p in db.query(Partner).filter(
+            Partner.course == request.course,
+            Partner.time == request.preferredTime
+        ).all()
+    ]
+    
     scored = [(partner, _partner_score(partner, request)) for partner in all_partners]
     scored.sort(key=lambda x: x[1], reverse=True)
 
@@ -119,10 +125,7 @@ def find_top_candidates(request: MatchRequest, db: Session, n: int = 3) -> list[
                 break
         i += int(len(same_score))
 
-    # Yeterli partner yoksa rastgele tamamla
-    if not result and all_partners:
-        result = random.sample(all_partners, min(n, len(all_partners)))
-
+    # Yeterli partner yoksa rastgele tamamlamıyoruz! Mantıksız aday çıkarmaktan kaçın.
     return result[:n]
 
 

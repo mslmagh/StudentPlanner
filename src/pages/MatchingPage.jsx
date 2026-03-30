@@ -6,6 +6,23 @@ import { API_BASE } from '../config'
 const { matching: t } = tr
 const STREAM_URL = `${API_BASE}/api/match/stream`
 
+/* ─── Çevrimiçi Durum Hesaplayıcı ─── */
+export function getOnlineStatus(partnerTime) {
+  const currentHour = new Date().getHours()
+  let isOnline = false
+  if (partnerTime === 'Morning' && currentHour >= 6 && currentHour < 12) isOnline = true
+  else if (partnerTime === 'Afternoon' && currentHour >= 12 && currentHour < 18) isOnline = true
+  else if (partnerTime === 'Evening' && currentHour >= 18 && currentHour < 24) isOnline = true
+  else if (partnerTime === 'Night' && currentHour >= 0 && currentHour < 6) isOnline = true
+
+  if (isOnline) {
+    return { isOnline: true, text: '🟢 Şu an Çevrimiçi', className: 'online' }
+  } else {
+    const map = { Morning: 'Sabahları', Afternoon: 'Öğleden Sonraları', Evening: 'Akşamları', Night: 'Geceleri' }
+    return { isOnline: false, text: `⚪ Genelde ${map[partnerTime] || partnerTime} aktif`, className: 'offline' }
+  }
+}
+
 /* ─── Puan rengini hesapla ─── */
 function scoreColor(score) {
   return score >= 75 ? 'green' : score >= 50 ? 'yellow' : 'red'
@@ -44,7 +61,13 @@ function MatchCard({ match, rank, defaultOpen }) {
         <div className="rank-badge">{t.rankLabel(rank)}</div>
 
         <div className="match-header-info">
-          <div className="match-partner-name">{match.matched_partner.name}</div>
+          <div className="match-partner-name" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {match.matched_partner.name}
+            {(() => {
+              const status = getOnlineStatus(match.matched_partner.time)
+              return <span className={`status-dot ${status.className}`}>{status.text}</span>
+            })()}
+          </div>
           <div className="match-partner-meta">
             {match.matched_partner.course} · {match.matched_partner.level} ·{' '}
             {match.matched_partner.time} · {match.matched_partner.studyType}
