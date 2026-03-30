@@ -1,3 +1,12 @@
+---
+title: Student Planner API
+emoji: 🚀
+colorFrom: pink
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # Study Partner CrewAI Backend
 
 ## Setup
@@ -67,6 +76,6 @@ The API will be available at `http://localhost:8000`.
 
 ## Notes
 
-- The backend reads `src/data/mockPartners.json` from the project root — keep paths intact.
+- The backend now uses **`partners.db`** (SQLite) to safely parse the candidate pool profiles.
 - CORS is pre-configured for `http://localhost:5173` (Vite dev server) and `http://localhost:4173` (Vite preview).
 - The crew runs tasks **sequentially**: skill analysis → compatibility → study plan → evaluation.
