@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
@@ -11,10 +12,15 @@ class StudyPartnerCrew:
     agents_config = "config/agents.yaml"
     tasks_config = "config/tasks.yaml"
 
+    def _model(self) -> str:
+        # Varsayılan Gemini modeli; .env ile GEMINI_MODEL üzerinden değiştirilebilir.
+        return os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+
     @agent
     def skill_analyzer(self) -> Agent:
         return Agent(
             config=self.agents_config["skill_analyzer"],
+            llm=self._model(),
             verbose=False,
         )
 
@@ -22,6 +28,7 @@ class StudyPartnerCrew:
     def compatibility_agent(self) -> Agent:
         return Agent(
             config=self.agents_config["compatibility_agent"],
+            llm=self._model(),
             verbose=False,
         )
 
@@ -29,6 +36,7 @@ class StudyPartnerCrew:
     def study_planner(self) -> Agent:
         return Agent(
             config=self.agents_config["study_planner"],
+            llm=self._model(),
             verbose=False,
         )
 
@@ -36,6 +44,7 @@ class StudyPartnerCrew:
     def match_evaluator(self) -> Agent:
         return Agent(
             config=self.agents_config["match_evaluator"],
+            llm=self._model(),
             verbose=False,
         )
 

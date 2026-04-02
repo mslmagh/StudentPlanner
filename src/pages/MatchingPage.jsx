@@ -155,6 +155,7 @@ function MatchingPage({ request, setMatches, setRequest }) {
   const [nextRank, setNextRank] = useState(1)
   const [isDone, setIsDone] = useState(false)
   const [error, setError] = useState(null)
+  const [itemErrors, setItemErrors] = useState([])
   
   // Filtre durumları
   const [filterType, setFilterType] = useState('All')
@@ -171,6 +172,7 @@ function MatchingPage({ request, setMatches, setRequest }) {
     setNextRank(1)
     setIsDone(false)
     setError(null)
+    setItemErrors([])
     setFilterType('All')
     setFilterLevel('All')
 
@@ -220,6 +222,7 @@ function MatchingPage({ request, setMatches, setRequest }) {
               const match = JSON.parse(payload)
               if (match.error) {
                 console.warn(`Rank ${match.rank} hatası:`, match.error)
+                setItemErrors((prev) => [...prev, String(match.error)])
                 setNextRank((p) => p + 1)
                 continue
               }
@@ -244,6 +247,12 @@ function MatchingPage({ request, setMatches, setRequest }) {
   }
 
   useEffect(() => {
+    if (isDone && matches.length === 0 && itemErrors.length > 0 && !error) {
+      setError(itemErrors[0])
+    }
+  }, [isDone, matches.length, itemErrors, error])
+
+  useEffect(() => {
     startStream(request)
     return () => abortRef.current?.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -258,6 +267,7 @@ function MatchingPage({ request, setMatches, setRequest }) {
     setNextRank(1)
     setIsDone(false)
     setError(null)
+    setItemErrors([])
     startStream(request)
   }
 

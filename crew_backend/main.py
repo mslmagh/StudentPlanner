@@ -18,6 +18,11 @@ Base.metadata.create_all(bind=engine)
 
 load_dotenv()
 
+
+def resolve_gemini_api_key() -> str | None:
+    """Gemini anahtarını tek noktadan çözümle (GEMINI_API_KEY veya GOOGLE_API_KEY)."""
+    return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+
 app = FastAPI(title="Study Partner Crew API")
 
 # CORS origins: geliştirme için localhost + üretimde FRONTEND_ORIGIN env var'ı
@@ -136,8 +141,16 @@ from fastapi import Depends
 
 @app.post("/api/match/stream")
 async def match_partner_stream(request: MatchRequest, db: Session = Depends(get_db)):
-    if not os.getenv("OPENAI_API_KEY"):
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set in .env")
+    gemini_key = resolve_gemini_api_key()
+    if not gemini_key:
+        raise HTTPException(
+            status_code=500,
+            detail="GEMINI_API_KEY (veya GOOGLE_API_KEY) .env içinde tanımlı değil",
+        )
+
+    # CrewAI/LiteLLM farklı sağlayıcı isimlerini kullanabildiği için iki env'i de doldur.
+    os.environ.setdefault("GEMINI_API_KEY", gemini_key)
+    os.environ.setdefault("GOOGLE_API_KEY", gemini_key)
 
     candidates = find_top_candidates(request, db=db, n=3)
     if not candidates:
