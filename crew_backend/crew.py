@@ -41,14 +41,6 @@ class StudyPartnerCrew:
             verbose=False,
         )
 
-    @agent
-    def match_evaluator(self) -> Agent:
-        return Agent(
-            config=self.agents_config["match_evaluator"],
-            llm=self._model(),
-            verbose=False,
-        )
-
     @task
     def analyze_skills_task(self) -> Task:
         return Task(config=self.tasks_config["analyze_skills_task"])
@@ -60,10 +52,6 @@ class StudyPartnerCrew:
     @task
     def study_planning_task(self) -> Task:
         return Task(config=self.tasks_config["study_planning_task"])
-
-    @task
-    def evaluation_task(self) -> Task:
-        return Task(config=self.tasks_config["evaluation_task"])
 
     @crew
     def crew(self) -> Crew:
@@ -128,15 +116,14 @@ def run_crew(course: str, level: str, preferred_time: str, study_type: str, part
     if last_error and 'result' not in locals():
         raise last_error
 
-    # Extract task outputs in order: skill_analysis, compatibility, plan, evaluation
+    # Extract task outputs in order: skill_analysis, compatibility, plan
     task_outputs = result.tasks_output
     skill_analysis = task_outputs[0].raw if len(task_outputs) > 0 else ""
     compatibility_raw = task_outputs[1].raw if len(task_outputs) > 1 else ""
     study_plan = task_outputs[2].raw if len(task_outputs) > 2 else ""
-    evaluation_raw = task_outputs[3].raw if len(task_outputs) > 3 else ""
 
     compatibility_score = _parse_score(compatibility_raw)
-    overall_score = _parse_score(evaluation_raw)
+    overall_score = compatibility_score
 
     return {
         "matched_partner": partner,
@@ -144,6 +131,6 @@ def run_crew(course: str, level: str, preferred_time: str, study_type: str, part
         "compatibility_raw": compatibility_raw,
         "compatibility_score": compatibility_score,
         "study_plan": study_plan,
-        "evaluation_raw": evaluation_raw,
+        "evaluation_raw": "",
         "overall_score": overall_score,
     }

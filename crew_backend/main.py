@@ -1,11 +1,10 @@
 import asyncio
 import json
 import os
-import random
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -79,6 +78,10 @@ class MatchRequest(BaseModel):
     studyType: str
 
 
+class AnalyzeCandidateRequest(MatchRequest):
+    partnerId: int
+
+
 def _partner_score(partner: dict, request: MatchRequest) -> int:
     """
     Puanlama mantığı:
@@ -103,41 +106,94 @@ def _partner_score(partner: dict, request: MatchRequest) -> int:
     return score
 
 
-def find_top_candidates(request: MatchRequest, db: Session, n: int = 3) -> list[dict]:
-    """
-    Tüm partnerleri değil, sadece aynı dersi (course) ve aynı uygun vakti (preferredTime) 
-    seçmiş olan partnerleri bul ve puanla. Sadece gerçeğe (mantıklı olanlara) uygun adaylar çıkar.
-    """
-    all_partners = [
+def find_exact_candidates(request: MatchRequest, db: Session) -> list[dict]:
+    """Ders + seviye + zaman + çalışma türü birebir eşleşen tüm adayları döndür."""
+    return [
         p.to_dict() for p in db.query(Partner).filter(
             Partner.course == request.course,
-            Partner.time == request.preferredTime
+            Partner.level == request.level,
+            Partner.time == request.preferredTime,
+            Partner.studyType == request.studyType,
         ).all()
     ]
-    
-    scored = [(partner, _partner_score(partner, request)) for partner in all_partners]
-    scored.sort(key=lambda x: x[1], reverse=True)
-
-    # Aynı puan grubu içinde karıştır — her seferinde farklı sıra
-    result: list[dict] = []
-    i = 0
-    while i < int(len(scored)) and len(result) < n:
-        same_score = [p for p, s in scored[i:] if s == scored[i][1]]
-        random.shuffle(same_score)
-        for p in same_score:
-            result.append(p)
-            if len(result) == n:
-                break
-        i += int(len(same_score))
-
-    # Yeterli partner yoksa rastgele tamamlamıyoruz! Mantıksız aday çıkarmaktan kaçın.
-    return result[:n]
 
 
+def to_candidate_payload(partners: list[dict], request: MatchRequest) -> list[dict]:
+    payload: list[dict] = []
+    for idx, partner in enumerate(partners, start=1):
+        payload.append(
+            {
+                "rank": idx,
+                "matched_partner": partner,
+                "rule_score": _partner_score(partner, request),
+                "ai_ready": False,
+                "compatibility_score": None,
+                "overall_score": None,
+                "skill_analysis": "",
+                "compatibility_raw": "",
+                "study_plan": "",
+                "evaluation_raw": "",
+            }
+        )
+    return payload
 
 
-# ─── Yeni streaming endpoint — top-3 SSE ───
-from fastapi import Depends
+
+
+# ─── Yeni akış: önce AI'sız aday listesi, sonra isteğe bağlı tekil analiz ───
+
+@app.post("/api/match/candidates")
+def list_candidates(request: MatchRequest, db: Session = Depends(get_db)):
+    candidates = find_exact_candidates(request, db=db)
+    if not candidates:
+        raise HTTPException(status_code=404, detail="Bu kriterlere uygun partner bulunamadı")
+    return to_candidate_payload(candidates, request)
+
+
+@app.post("/api/match/analyze")
+async def analyze_candidate(request: AnalyzeCandidateRequest, db: Session = Depends(get_db)):
+    gemini_key = resolve_gemini_api_key()
+    if not gemini_key:
+        raise HTTPException(
+            status_code=500,
+            detail="GEMINI_API_KEY (veya GOOGLE_API_KEY) .env içinde tanımlı değil",
+        )
+
+    os.environ.setdefault("GEMINI_API_KEY", gemini_key)
+    os.environ.setdefault("GOOGLE_API_KEY", gemini_key)
+
+    partner_row = (
+        db.query(Partner)
+        .filter(
+            Partner.id == request.partnerId,
+            Partner.course == request.course,
+            Partner.level == request.level,
+            Partner.time == request.preferredTime,
+            Partner.studyType == request.studyType,
+        )
+        .first()
+    )
+
+    if partner_row is None:
+        raise HTTPException(status_code=404, detail="Seçilen partner kriterlerle eşleşmiyor")
+
+    try:
+        result = await asyncio.to_thread(
+            run_crew,
+            course=request.course,
+            level=request.level,
+            preferred_time=request.preferredTime,
+            study_type=request.studyType,
+            partner=partner_row.to_dict(),
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    result["ai_ready"] = True
+    return result
+
+
+# ─── Geriye dönük uyumluluk için stream endpoint'i tutuldu ───
 
 @app.post("/api/match/stream")
 async def match_partner_stream(request: MatchRequest, db: Session = Depends(get_db)):
@@ -152,7 +208,7 @@ async def match_partner_stream(request: MatchRequest, db: Session = Depends(get_
     os.environ.setdefault("GEMINI_API_KEY", gemini_key)
     os.environ.setdefault("GOOGLE_API_KEY", gemini_key)
 
-    candidates = find_top_candidates(request, db=db, n=3)
+    candidates = find_exact_candidates(request, db=db)[:3]
     if not candidates:
         raise HTTPException(status_code=404, detail="No partners available in mock data")
 

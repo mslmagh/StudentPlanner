@@ -54,26 +54,3 @@ study_planning_task:
     Türkçe yazılmış olmalı.
   agent: study_planner
 
-evaluation_task:
-  description: >
-    Bu eşleştirme talebi için üretilen beceri analizi, uyumluluk değerlendirmesi
-    ve çalışma planını incele (Ders: {course}, Seviye: {level}) ve final
-    kalite değerlendirmesi yap.
-
-    Kontrol et:
-    1. Uyumluluk puanı haklı mı?
-    2. Çalışma planı {level} seviyesindeki bir öğrenci için gerçekçi mi?
-    3. Herhangi bir endişe veya kırmızı bayrak var mı?
-    4. Genel eşleşme kalitesi puanı nedir (0-100)?
-
-    ÖNEMLİ BİLGİ: Puanı HESAPLARKEN rastgele veya sürekli '85/100' gibi sabit değerler GİRMEYİN. 
-    Önceki uyumluluk analizini okuyun ve o puana paralel, inandırıcı ve adayın tam durumunu yansıtan bir 
-    Genel Puan (örneğin 42, 67, 91 vb.) belirleyin.
-
-    Özlü ol. En fazla 4 cümle.
-    ÖNEMLI: Yanıtını yalnızca Türkçe olarak ver.
-  expected_output: >
-    Gerçekten düşünülmüş bir genel eşleşme puanı (0-100) ve en fazla 4 cümle geri bildirim içeren
-    final değerlendirme. Format kesinlikle: "Genel Puan: XX/100. [geri bildirim]."
-    Türkçe yazılmış olmalı.
-  agent: match_evaluator

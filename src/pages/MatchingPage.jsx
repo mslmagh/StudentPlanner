@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, Navigate } from 'react-router-dom'
 import tr from '../i18n'
 import { API_BASE } from '../config'
 
 const { matching: t } = tr
-const STREAM_URL = `${API_BASE}/api/match/stream`
+const CANDIDATES_URL = `${API_BASE}/api/match/candidates`
+const ANALYZE_URL = `${API_BASE}/api/match/analyze`
 
 /* ─── Çevrimiçi Durum Hesaplayıcı ─── */
 export function getOnlineStatus(partnerTime) {
@@ -25,23 +26,25 @@ export function getOnlineStatus(partnerTime) {
 
 /* ─── Puan rengini hesapla ─── */
 function scoreColor(score) {
+  if (typeof score !== 'number') return 'yellow'
   return score >= 75 ? 'green' : score >= 50 ? 'yellow' : 'red'
 }
 
 /* ─── Tek bir puan çubuğu ─── */
 function ScoreBar({ score, label }) {
+  const safeScore = typeof score === 'number' ? score : 0
   return (
     <div className="score-bar-wrap">
       <div className="score-bar-header">
         <span>{label}</span>
-        <span>{score}/100</span>
+        <span>{safeScore}/100</span>
       </div>
       <div className="score-track">
         <div
           className="score-fill"
           style={{
-            width: `${score}%`,
-            background: score >= 75 ? 'var(--score-green)' : score >= 50 ? 'var(--score-yellow)' : 'var(--score-red)',
+            width: `${safeScore}%`,
+            background: safeScore >= 75 ? 'var(--score-green)' : safeScore >= 50 ? 'var(--score-yellow)' : 'var(--score-red)',
           }}
         />
       </div>
@@ -49,15 +52,21 @@ function ScoreBar({ score, label }) {
   )
 }
 
-/* ─── Açılır/kapanır match kartı ─── */
-function MatchCard({ match, rank, defaultOpen }) {
+/* ─── Aday kartı (AI analizi istekle yapılır) ─── */
+function MatchCard({ match, rank, defaultOpen, onAnalyze, isAnalyzing }) {
   const [open, setOpen] = useState(defaultOpen)
+  const aiReady = Boolean(match.ai_ready)
   const isBest = rank === 1
 
   return (
     <div className={`match-card${isBest ? ' best' : ''}${open ? ' open' : ''}`}>
-      {/* Başlık satırı — tıklanabilir */}
-      <div className="match-card-header" onClick={() => setOpen((p) => !p)}>
+      {/* Başlık satırı */}
+      <div
+        className="match-card-header"
+        onClick={() => {
+          if (aiReady) setOpen((p) => !p)
+        }}
+      >
         <div className="rank-badge">{t.rankLabel(rank)}</div>
 
         <div className="match-header-info">
@@ -75,20 +84,38 @@ function MatchCard({ match, rank, defaultOpen }) {
         </div>
 
         <div className="match-header-scores">
-          {/* i18n'den alınan pill etiketleri */}
-          <span className={`score-pill ${scoreColor(match.compatibility_score)}`}>
-            {t.pillCompat} {match.compatibility_score}/100
-          </span>
-          <span className={`score-pill ${scoreColor(match.overall_score)}`}>
-            {t.pillOverall} {match.overall_score}/100
-          </span>
+          {aiReady ? (
+            <>
+              <span className={`score-pill ${scoreColor(match.compatibility_score)}`}>
+                {t.pillCompat} {match.compatibility_score}/100
+              </span>
+              <span className={`score-pill ${scoreColor(match.overall_score)}`}>
+                {t.pillOverall} {match.overall_score}/100
+              </span>
+            </>
+          ) : (
+            <span className="score-pill yellow">AI analizi bekleniyor</span>
+          )}
         </div>
 
-        <span className="toggle-chevron">▼</span>
+        {aiReady ? (
+          <span className="toggle-chevron">▼</span>
+        ) : (
+          <button
+            className="secondary-button"
+            disabled={isAnalyzing}
+            onClick={(e) => {
+              e.stopPropagation()
+              onAnalyze(match)
+            }}
+          >
+            {isAnalyzing ? 'Analiz Ediliyor...' : 'AI ile Analiz Et'}
+          </button>
+        )}
       </div>
 
       {/* Detaylar — açıldığında görünür */}
-      {open && (
+      {aiReady && open && (
         <div className="match-card-body">
           <div className="score-section">
             <h3>{t.scores}</h3>
@@ -112,23 +139,8 @@ function MatchCard({ match, rank, defaultOpen }) {
             <h3>{t.studyPlan}</h3>
             <div className="plan-box">{match.study_plan}</div>
           </div>
-
-          <div className="result-section eval-box">
-            <h3>{t.evaluation}</h3>
-            <p>{match.evaluation_raw}</p>
-          </div>
         </div>
       )}
-    </div>
-  )
-}
-
-/* ─── "Yükleniyor" ghost kartı ─── */
-function GhostCard({ rank }) {
-  return (
-    <div className="match-card-ghost">
-      <div className="ghost-spinner" />
-      <span className="ghost-label">{t.loadingMatch(rank)}</span>
     </div>
   )
 }
@@ -144,7 +156,7 @@ function friendlyError(rawError) {
     lower.includes('resource_exhausted') ||
     lower.includes('429')
   ) {
-    return 'Gemini API kotası/dakika limiti aşıldı. Biraz bekleyip tekrar dene veya daha düşük bir model kullan (örn: gemini/gemini-1.5-flash).'
+    return 'Gemini API kotası/dakika limiti aşıldı. Biraz bekleyip tekrar dene veya farklı bir API key/model kullan.'
   }
 
   if (
@@ -177,44 +189,24 @@ function friendlyError(rawError) {
 }
 
 /* ─── Ana sayfa ─── */
-function MatchingPage({ request, setMatches, setRequest }) {
+function MatchingPage({ request, setMatches }) {
   const [matches, setLocalMatches] = useState([])
-  const [nextRank, setNextRank] = useState(1)
-  const [isDone, setIsDone] = useState(false)
+  const [isLoadingCandidates, setIsLoadingCandidates] = useState(false)
+  const [analyzingPartnerId, setAnalyzingPartnerId] = useState(null)
   const [error, setError] = useState(null)
-  const [itemErrors, setItemErrors] = useState([])
-  
-  // Filtre durumları
-  const [filterType, setFilterType] = useState('All')
-  const [filterLevel, setFilterLevel] = useState('All')
 
-  const abortRef = useRef(null)
-  const navigate = useNavigate()
-
-  const startStream = (req) => {
+  const fetchCandidates = (req) => {
     if (!req) return
 
-    // Sıfırla
-    setLocalMatches([])
-    setNextRank(1)
-    setIsDone(false)
+    setIsLoadingCandidates(true)
     setError(null)
-    setItemErrors([])
-    setFilterType('All')
-    setFilterLevel('All')
-
-    // Önceki isteği iptal et
-    if (abortRef.current) abortRef.current.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
 
     ;(async () => {
       try {
-        const res = await fetch(STREAM_URL, {
+        const res = await fetch(CANDIDATES_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(req),
-          signal: controller.signal,
         })
 
         if (!res.ok) {
@@ -226,107 +218,87 @@ function MatchingPage({ request, setMatches, setRequest }) {
           throw new Error(msg)
         }
 
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() ?? ''
-
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue
-            const payload = line.slice(6).trim()
-            if (payload === '[DONE]') {
-              setIsDone(true)
-              continue
-            }
-            try {
-              const match = JSON.parse(payload)
-              if (match.error) {
-                console.warn(`Rank ${match.rank} hatası:`, match.error)
-                setItemErrors((prev) => [...prev, String(match.error)])
-                setNextRank((p) => p + 1)
-                continue
-              }
-              setLocalMatches((prev) => {
-                const updated = [...prev, match]
-                // Bütün match objesini kaydediyoruz ki study_plan vs okunsun
-                setMatches(updated)
-                return updated
-              })
-              setNextRank(match.rank + 1)
-            } catch {
-              /* parse hatası — yoksay */
-            }
-          }
-        }
+        const data = await res.json()
+        setLocalMatches(data)
+        setMatches(data)
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          setError(String(err.message ?? err))
-        }
+        setLocalMatches([])
+        setMatches([])
+        setError(String(err.message ?? err))
+      } finally {
+        setIsLoadingCandidates(false)
       }
     })()
   }
 
-  useEffect(() => {
-    if (isDone && matches.length === 0 && itemErrors.length > 0 && !error) {
-      setError(itemErrors[0])
+  const handleAnalyze = async (match) => {
+    if (!request || !match?.matched_partner?.id) return
+
+    setAnalyzingPartnerId(match.matched_partner.id)
+    setError(null)
+
+    try {
+      const res = await fetch(ANALYZE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...request, partnerId: match.matched_partner.id }),
+      })
+
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`
+        try {
+          const d = await res.json()
+          msg = d.detail || msg
+        } catch { /* parse hatası */ }
+        throw new Error(msg)
+      }
+
+      const analyzed = await res.json()
+      setLocalMatches((prev) => {
+        const updated = prev.map((item) => {
+          if (item.matched_partner?.id !== match.matched_partner.id) return item
+          return {
+            ...item,
+            ...analyzed,
+            ai_ready: true,
+            matched_partner: analyzed.matched_partner || item.matched_partner,
+          }
+        })
+        setMatches(updated)
+        return updated
+      })
+    } catch (err) {
+      setError(String(err.message ?? err))
+    } finally {
+      setAnalyzingPartnerId(null)
     }
-  }, [isDone, matches.length, itemErrors, error])
+  }
 
   useEffect(() => {
-    startStream(request)
-    return () => abortRef.current?.abort()
+    fetchCandidates(request)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request])
 
-  // Yeniden eşleştir: aynı form verisiyle yeni stream başlat
+  // Yeniden eşleştir: aynı form verisiyle aday listesi tazele
   const handleRematch = () => {
     if (!request) return
-    // request ref'ini değişmeden bırak ama etkiyi tetikle:
-    setMatches([])
-    setLocalMatches([])
-    setNextRank(1)
-    setIsDone(false)
-    setError(null)
-    setItemErrors([])
-    startStream(request)
+    fetchCandidates(request)
   }
 
   if (!request) return <Navigate to="/create-request" replace />
 
-  const isStreaming = !isDone && !error
-  const TOTAL = 3
-
-  // ─── Eşleşmeleri Filtrele ve Sırala ───
-  const filteredMatches = matches.filter((m) => {
-    const p = m.matched_partner || {}
-    if (filterType !== 'All' && p.studyType !== filterType) return false
-    if (filterLevel !== 'All' && p.level !== filterLevel) return false
-    return true
-  })
-
-  // Uyumluluk puanına göre BÜYÜKTEN KÜÇÜĞE sırala
-  const sortedMatches = [...filteredMatches].sort((a, b) => {
-    return (b.compatibility_score || 0) - (a.compatibility_score || 0)
-  })
+  const analyzedCount = matches.filter((m) => m.ai_ready).length
 
   return (
     <section className="card">
       <h2>{t.title}</h2>
 
-      {/* Durum çubuğu */}
-      {isStreaming && matches.length === 0 && (
+      {isLoadingCandidates && (
         <div className="loading-box">
           <div className="spinner-ring" />
           <div className="loading-steps">
-            {t.loadingSteps.map((step, i) => (
-              <div key={step} className={i === 0 ? 'loading-step active' : 'loading-step'}>
+            {['Kriterlere uygun partnerler veritabanında aranıyor...'].map((step) => (
+              <div key={step} className="loading-step active">
                 <span className="step-dot" />
                 {step}
               </div>
@@ -336,8 +308,8 @@ function MatchingPage({ request, setMatches, setRequest }) {
       )}
 
       {matches.length > 0 && (
-        <div className={`stream-status${isDone ? ' done' : ''}`}>
-          {isDone ? `✅ ${t.allDone(matches.length)}` : `⏳ ${t.loadingMatch(nextRank)}`}
+        <div className="stream-status done">
+          {`✅ ${matches.length} aday bulundu — analiz için bir adaya tıkla (${analyzedCount} analiz tamamlandı)`}
         </div>
       )}
 
@@ -351,52 +323,29 @@ function MatchingPage({ request, setMatches, setRequest }) {
         </div>
       )}
 
-      {/* Filtreleme Barları (Eşleşmeler Varken Görünsün) */}
-      {matches.length > 0 && (
-        <div className="filters-container">
-          <div className="filter-group">
-            <span className="filter-label">Tür:</span>
-            <button className={`filter-pill ${filterType === 'All' ? 'active' : ''}`} onClick={() => setFilterType('All')}>Tümü</button>
-            <button className={`filter-pill ${filterType === 'Online' ? 'active' : ''}`} onClick={() => setFilterType('Online')}>Online</button>
-            <button className={`filter-pill ${filterType === 'In-person' ? 'active' : ''}`} onClick={() => setFilterType('In-person')}>Yüz Yüze</button>
-          </div>
-          <div className="filter-group">
-            <span className="filter-label">Seviye:</span>
-            <button className={`filter-pill ${filterLevel === 'All' ? 'active' : ''}`} onClick={() => setFilterLevel('All')}>Tümü</button>
-            <button className={`filter-pill ${filterLevel === 'Beginner' ? 'active' : ''}`} onClick={() => setFilterLevel('Beginner')}>Beginner</button>
-            <button className={`filter-pill ${filterLevel === 'Intermediate' ? 'active' : ''}`} onClick={() => setFilterLevel('Intermediate')}>Intermediate</button>
-            <button className={`filter-pill ${filterLevel === 'Advanced' ? 'active' : ''}`} onClick={() => setFilterLevel('Advanced')}>Advanced</button>
-          </div>
-        </div>
-      )}
-
-      {/* Match kartları */}
+      {/* Aday kartları */}
       {matches.length > 0 && (
         <div className="matches-list">
-          {sortedMatches.map((match, idx) => (
+          {matches.map((match, idx) => (
             <MatchCard
-              key={match.rank} // VDOM takibi için orjinal rank
+              key={match.matched_partner?.id || match.rank}
               match={match}
-              rank={idx + 1} // Görsel gösterim için sıralı numara
+              rank={idx + 1}
               defaultOpen={idx === 0}
+              onAnalyze={handleAnalyze}
+              isAnalyzing={analyzingPartnerId === match.matched_partner?.id}
             />
           ))}
-
-          {/* Ghost kartlar — bekleyen eşleşmeler */}
-          {isStreaming &&
-            Array.from({ length: TOTAL - matches.length }, (_, i) => (
-              <GhostCard key={`ghost-${matches.length + i + 1}`} rank={matches.length + i + 1} />
-            ))}
         </div>
       )}
 
       {/* Aksiyon butonları */}
-      {(isDone || error) && (
+      {(matches.length > 0 || error) && (
         <div className="matching-actions">
           <button className="secondary-button" onClick={handleRematch}>
             {t.rematch}
           </button>
-          {isDone && matches.length > 0 && (
+          {analyzedCount > 0 && (
             <Link to="/active-sessions" className="primary-button inline-button">
               {t.viewSessions}
             </Link>
