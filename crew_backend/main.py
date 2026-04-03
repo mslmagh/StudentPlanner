@@ -10,6 +10,57 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+LEVEL_ORDER = ["Beginner", "Intermediate", "Advanced"]
+STUDY_TYPES = ["Online", "In-person"]
+TIME_ORDER = ["Morning", "Afternoon", "Evening", "Night"]
+
+
+def ensure_minimum_candidates_per_combo(db: Session, minimum: int = 3):
+    """Her ders + seviye + zaman + tür kombinasyonu için en az `minimum` aday olmasını sağlar."""
+    all_partners = db.query(Partner).all()
+    if not all_partners:
+        return
+
+    courses = sorted({p.course for p in all_partners if p.course})
+    if not courses:
+        return
+
+    counts: dict[tuple[str, str, str, str], int] = {}
+    for p in all_partners:
+        key = (p.course, p.level, p.time, p.studyType)
+        counts[key] = counts.get(key, 0) + 1
+
+    used_names = {p.name for p in all_partners if p.name}
+    sequence = 1
+    created = 0
+
+    for course in courses:
+        for level in LEVEL_ORDER:
+            for time_slot in TIME_ORDER:
+                for study_type in STUDY_TYPES:
+                    key = (course, level, time_slot, study_type)
+                    existing = counts.get(key, 0)
+                    missing = max(0, minimum - existing)
+                    for _ in range(missing):
+                        while True:
+                            candidate_name = f"Aday{sequence:04d}"
+                            sequence += 1
+                            if candidate_name not in used_names:
+                                break
+                        used_names.add(candidate_name)
+                        db.add(
+                            Partner(
+                                name=candidate_name,
+                                course=course,
+                                level=level,
+                                time=time_slot,
+                                studyType=study_type,
+                            )
+                        )
+                        created += 1
+
+    if created > 0:
+        db.commit()
 from crew import run_crew
 from database import Base, SessionLocal, engine, Partner
 
@@ -67,8 +118,7 @@ def seed_database_if_empty(db: Session):
 # On startup, seed DB
 with SessionLocal() as db:
     seed_database_if_empty(db)
-
-TIME_ORDER = ["Morning", "Afternoon", "Evening", "Night"]
+    ensure_minimum_candidates_per_combo(db, minimum=3)
 
 
 class MatchRequest(BaseModel):
