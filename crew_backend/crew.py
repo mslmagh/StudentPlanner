@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
@@ -13,8 +14,8 @@ class StudyPartnerCrew:
     tasks_config = "config/tasks.yaml"
 
     def _model(self) -> str:
-        # Varsayılan Gemini modeli; .env ile GEMINI_MODEL üzerinden değiştirilebilir.
-        return os.getenv("GEMINI_MODEL", "gemini/gemini-2.5-flash")
+        # Free tier için desteklenen düşük maliyetli varsayılan model.
+        return os.getenv("GEMINI_MODEL", "gemini/gemini-2.0-flash-lite")
 
     @agent
     def skill_analyzer(self) -> Agent:
@@ -104,7 +105,28 @@ def run_crew(course: str, level: str, preferred_time: str, study_type: str, part
         "partner_profile": partner_profile,
     }
 
-    result = StudyPartnerCrew().crew().kickoff(inputs=inputs)
+    last_error = None
+    for attempt in range(3):
+        try:
+            result = StudyPartnerCrew().crew().kickoff(inputs=inputs)
+            break
+        except Exception as exc:
+            last_error = exc
+            msg = str(exc).lower()
+            transient = (
+                "apiconnectionerror" in msg
+                or "getaddrinfo failed" in msg
+                or "connection error" in msg
+                or "name resolution" in msg
+                or "timed out" in msg
+            )
+            if not transient or attempt == 2:
+                raise
+            # Geçici ağ hatalarında kısa bekleme ile yeniden dene.
+            time.sleep(1.2 * (attempt + 1))
+
+    if last_error and 'result' not in locals():
+        raise last_error
 
     # Extract task outputs in order: skill_analysis, compatibility, plan, evaluation
     task_outputs = result.tasks_output

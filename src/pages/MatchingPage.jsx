@@ -136,13 +136,40 @@ function GhostCard({ rank }) {
 /* ─── Hata mesajını kullanıcı dostu hale getir ─── */
 function friendlyError(rawError) {
   if (!rawError) return ''
+  const lower = rawError.toLowerCase()
+
+  if (
+    lower.includes('quota') ||
+    lower.includes('rate limit') ||
+    lower.includes('resource_exhausted') ||
+    lower.includes('429')
+  ) {
+    return 'Gemini API kotası/dakika limiti aşıldı. Biraz bekleyip tekrar dene veya daha düşük bir model kullan (örn: gemini/gemini-1.5-flash).'
+  }
+
+  if (
+    lower.includes('apiconnectionerror') ||
+    lower.includes('getaddrinfo failed') ||
+    lower.includes('connection error') ||
+    lower.includes('name resolution')
+  ) {
+    return 'Gemini API bağlantısı kurulamadı (DNS/ağ hatası). İnternet, VPN/proxy ve güvenlik duvarını kontrol edip tekrar dene.'
+  }
+
+  
+  if (
+    lower.includes('not_found') ||
+    lower.includes('model') && lower.includes('is not found')
+  ) {
+    return 'Seçilen Gemini modeli desteklenmiyor. Geçerli bir model adı kullan (örn: gemini/gemini-2.0-flash-lite).'
+  }
+
   // Backend 500 olduğunda "detail" anahtarı JSON içinde gelebilir
   // Ancak bizim fetch zaten d.detail'i exception message'a koyuyor.
   // "Internal Server Error" ya da çok uzun string ise basit mesaj göster.
   if (
-    rawError.toLowerCase().includes('internal server error') ||
-    rawError.toLowerCase().includes('500') ||
-    rawError.length > 200
+    lower.includes('internal server error') ||
+    lower.includes('500')
   ) {
     return t.serverError
   }

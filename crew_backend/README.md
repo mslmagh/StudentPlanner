@@ -11,7 +11,7 @@ pinned: false
 
 ## Setup
 
-1. Copy `.env.example` to `.env` and add your OpenAI API key.
+1. Copy `.env.example` to `.env` and add your Gemini API key.
 2. Install dependencies:
 
 ```bash
@@ -31,10 +31,10 @@ The API will be available at `http://localhost:8000`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/match` | Run the CrewAI pipeline and return match results |
+| `POST` | `/api/match/stream` | Stream top matches as SSE (`data: {...}`) |
 | `GET`  | `/health`    | Health check |
 
-### POST `/api/match` — Request Body
+### POST `/api/match/stream` — Request Body
 
 ```json
 {
@@ -45,7 +45,7 @@ The API will be available at `http://localhost:8000`.
 }
 ```
 
-### POST `/api/match` — Response
+### POST `/api/match/stream` — Stream Event (`data:`)
 
 ```json
 {
@@ -72,7 +72,9 @@ The API will be available at `http://localhost:8000`.
 
 | Variable | Description |
 |----------|-------------|
-| `OPENAI_API_KEY` | Your OpenAI API key (required) |
+| `GEMINI_API_KEY` | Your Gemini API key (required) |
+| `GOOGLE_API_KEY` | Alternative key name for Gemini integrations (optional) |
+| `GEMINI_MODEL` | Model name (optional, default: `gemini/gemini-2.5-flash`) |
 
 ## Notes
 
