@@ -88,7 +88,6 @@ const tr = {
     matchedPartner: '✅ Eşleşen Partner',
     scores: 'Eşleşme Puanları',
     compatibilityScore: 'Uyumluluk Puanı',
-    overallScore: 'Genel Eşleşme Kalitesi',
     skillAnalysis: '🔍 Beceri Analizi',
     compatibility: '🤝 Uyumluluk Değerlendirmesi',
     studyPlan: '📅 1 Haftalık Çalışma Planı',
@@ -97,7 +96,6 @@ const tr = {
     rematch: '🔄 Farklı Partner Bul',
     // MatchCard pill labels
     pillCompat: 'Uyum',
-    pillOverall: 'Genel',
     // Readable error from backend
     serverError: 'Sunucu hatası oluştu. Lütfen tekrar dene.',
   },

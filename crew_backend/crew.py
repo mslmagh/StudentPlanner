@@ -14,8 +14,15 @@ class StudyPartnerCrew:
     tasks_config = "config/tasks.yaml"
 
     def _model(self) -> str:
-        # Free tier için desteklenen düşük maliyetli varsayılan model.
-        return os.getenv("GEMINI_MODEL", "gemini/gemini-2.0-flash-lite")
+        # OPENROUTER_MODEL'de prefix yoksa otomatik ekle (örn: deepseek/deepseek-v3.2).
+        openrouter_model = os.getenv("OPENROUTER_MODEL")
+        if openrouter_model:
+            model = openrouter_model.strip()
+            if model and not model.startswith("openrouter/"):
+                return f"openrouter/{model}"
+            return model
+
+        return os.getenv("GEMINI_MODEL") or "openrouter/deepseek/deepseek-v3.2"
 
     @agent
     def skill_analyzer(self) -> Agent:
@@ -123,7 +130,6 @@ def run_crew(course: str, level: str, preferred_time: str, study_type: str, part
     study_plan = task_outputs[2].raw if len(task_outputs) > 2 else ""
 
     compatibility_score = _parse_score(compatibility_raw)
-    overall_score = compatibility_score
 
     return {
         "matched_partner": partner,
@@ -131,6 +137,4 @@ def run_crew(course: str, level: str, preferred_time: str, study_type: str, part
         "compatibility_raw": compatibility_raw,
         "compatibility_score": compatibility_score,
         "study_plan": study_plan,
-        "evaluation_raw": "",
-        "overall_score": overall_score,
     }

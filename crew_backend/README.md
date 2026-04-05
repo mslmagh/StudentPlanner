@@ -11,7 +11,7 @@ pinned: false
 
 ## Setup
 
-1. Copy `.env.example` to `.env` and add your Gemini API key.
+1. Copy `.env.example` to `.env` and add your OpenRouter API key (or Gemini fallback key).
 2. Install dependencies:
 
 ```bash
@@ -53,9 +53,7 @@ The API will be available at `http://localhost:8000`.
   "skill_analysis": "...",
   "compatibility_raw": "Score: 85/100. ...",
   "compatibility_score": 85,
-  "study_plan": "...",
-  "evaluation_raw": "Overall Score: 90/100. ...",
-  "overall_score": 90
+  "study_plan": "..."
 }
 ```
 
@@ -66,18 +64,19 @@ The API will be available at `http://localhost:8000`.
 | `skill_analyzer` | Profiles the student's skill gaps and requirements |
 | `compatibility_agent` | Scores partner compatibility (0–100) |
 | `study_planner` | Builds a 1-week session-by-session study plan |
-| `match_evaluator` | Final quality judge with overall score (0–100) |
 
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `GEMINI_API_KEY` | Your Gemini API key (required) |
-| `GOOGLE_API_KEY` | Alternative key name for Gemini integrations (optional) |
-| `GEMINI_MODEL` | Model name (optional, default: `gemini/gemini-2.5-flash`) |
+| `OPENROUTER_API_KEY` | Your OpenRouter API key (recommended) |
+| `OPENROUTER_MODEL` | OpenRouter model id (optional, default: `deepseek/deepseek-v3.2`) |
+| `GEMINI_API_KEY` | Gemini fallback key (optional) |
+| `GOOGLE_API_KEY` | Alternative Gemini key name (optional) |
+| `GEMINI_MODEL` | Gemini fallback model (optional) |
 
 ## Notes
 
 - The backend now uses **`partners.db`** (SQLite) to safely parse the candidate pool profiles.
 - CORS is pre-configured for `http://localhost:5173` (Vite dev server) and `http://localhost:4173` (Vite preview).
-- The crew runs tasks **sequentially**: skill analysis → compatibility → study plan → evaluation.
+- The crew runs tasks **sequentially**: skill analysis → compatibility → study plan.

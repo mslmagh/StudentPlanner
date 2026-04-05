@@ -85,14 +85,9 @@ function MatchCard({ match, rank, defaultOpen, onAnalyze, isAnalyzing }) {
 
         <div className="match-header-scores">
           {aiReady ? (
-            <>
-              <span className={`score-pill ${scoreColor(match.compatibility_score)}`}>
-                {t.pillCompat} {match.compatibility_score}/100
-              </span>
-              <span className={`score-pill ${scoreColor(match.overall_score)}`}>
-                {t.pillOverall} {match.overall_score}/100
-              </span>
-            </>
+            <span className={`score-pill ${scoreColor(match.compatibility_score)}`}>
+              {t.pillCompat} {match.compatibility_score}/100
+            </span>
           ) : (
             <span className="score-pill yellow">AI analizi bekleniyor</span>
           )}
@@ -120,7 +115,6 @@ function MatchCard({ match, rank, defaultOpen, onAnalyze, isAnalyzing }) {
           <div className="score-section">
             <h3>{t.scores}</h3>
             <ScoreBar score={match.compatibility_score} label={t.compatibilityScore} />
-            <ScoreBar score={match.overall_score} label={t.overallScore} />
           </div>
 
           <div className="result-section">
@@ -151,12 +145,23 @@ function friendlyError(rawError) {
   const lower = rawError.toLowerCase()
 
   if (
+    lower.includes('authenticationerror') ||
+    lower.includes('authentication fails') ||
+    lower.includes('invalid api key') ||
+    lower.includes('governor') ||
+    lower.includes('unauthorized') ||
+    lower.includes('401')
+  ) {
+    return 'OpenRouter kimlik doğrulama hatası. OPENROUTER_API_KEY, model adı ve OpenRouter bakiye/kredi durumunu kontrol et.'
+  }
+
+  if (
     lower.includes('quota') ||
     lower.includes('rate limit') ||
     lower.includes('resource_exhausted') ||
     lower.includes('429')
   ) {
-    return 'Gemini API kotası/dakika limiti aşıldı. Biraz bekleyip tekrar dene veya farklı bir API key/model kullan.'
+    return 'LLM API kotası/dakika limiti aşıldı. Biraz bekleyip tekrar dene veya farklı bir API key/model kullan.'
   }
 
   if (
@@ -165,7 +170,7 @@ function friendlyError(rawError) {
     lower.includes('connection error') ||
     lower.includes('name resolution')
   ) {
-    return 'Gemini API bağlantısı kurulamadı (DNS/ağ hatası). İnternet, VPN/proxy ve güvenlik duvarını kontrol edip tekrar dene.'
+    return 'API bağlantısı kurulamadı (DNS/ağ hatası). İnternet, VPN/proxy ve güvenlik duvarını kontrol edip tekrar dene.'
   }
 
   
@@ -173,7 +178,7 @@ function friendlyError(rawError) {
     lower.includes('not_found') ||
     lower.includes('model') && lower.includes('is not found')
   ) {
-    return 'Seçilen Gemini modeli desteklenmiyor. Geçerli bir model adı kullan (örn: gemini/gemini-2.0-flash-lite).'
+    return 'Seçilen model desteklenmiyor. Geçerli bir model adı kullan (örn: deepseek/deepseek-v3.2 veya gemini/gemini-2.0-flash-lite).'
   }
 
   // Backend 500 olduğunda "detail" anahtarı JSON içinde gelebilir

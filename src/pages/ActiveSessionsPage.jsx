@@ -130,13 +130,10 @@ function ActiveSessionsPage({ matches, setMatches }) {
                     <span className="session-meta">
                       {s.partner.course} · {s.levelLabel} · {s.timeLabel} · {s.typeLabel}
                     </span>
-                    {(s.compatibility_score != null && s.overall_score != null) && (
+                    {s.compatibility_score != null && (
                       <div className="session-header-scores">
                         <span className={`score-pill ${scoreColor(s.compatibility_score)}`}>
                           {mt.pillCompat} {s.compatibility_score}/100
-                        </span>
-                        <span className={`score-pill ${scoreColor(s.overall_score)}`}>
-                          {mt.pillOverall} {s.overall_score}/100
                         </span>
                       </div>
                     )}

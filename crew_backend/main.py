@@ -69,9 +69,41 @@ Base.metadata.create_all(bind=engine)
 load_dotenv()
 
 
-def resolve_gemini_api_key() -> str | None:
-    """Gemini anahtarını tek noktadan çözümle (GEMINI_API_KEY veya GOOGLE_API_KEY)."""
-    return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+def resolve_llm_provider_and_key() -> tuple[str, str] | None:
+    """OpenRouter anahtarını öncelikli çöz, yoksa Gemini anahtarlarına geri dön."""
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    if openrouter_key:
+        return ("openrouter", openrouter_key)
+
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if gemini_key:
+        return ("gemini", gemini_key)
+
+    return None
+
+
+def configure_llm_env() -> None:
+    """Seçilen sağlayıcıya göre gerekli ortam değişkenlerini ayarla."""
+    resolved = resolve_llm_provider_and_key()
+    if not resolved:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "API anahtarı bulunamadı. OPENROUTER_API_KEY veya "
+                "GEMINI_API_KEY/GOOGLE_API_KEY .env içinde tanımlı olmalı"
+            ),
+        )
+
+    provider, key = resolved
+    if provider == "openrouter":
+        os.environ["OPENROUTER_API_KEY"] = key
+        os.environ["OPENAI_API_KEY"] = key
+        os.environ.setdefault("OPENAI_API_BASE", "https://openrouter.ai/api/v1")
+        os.environ.setdefault("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        return
+
+    os.environ["GEMINI_API_KEY"] = key
+    os.environ["GOOGLE_API_KEY"] = key
 
 app = FastAPI(title="Study Partner Crew API")
 
@@ -178,11 +210,9 @@ def to_candidate_payload(partners: list[dict], request: MatchRequest) -> list[di
                 "rule_score": _partner_score(partner, request),
                 "ai_ready": False,
                 "compatibility_score": None,
-                "overall_score": None,
                 "skill_analysis": "",
                 "compatibility_raw": "",
                 "study_plan": "",
-                "evaluation_raw": "",
             }
         )
     return payload
@@ -202,15 +232,7 @@ def list_candidates(request: MatchRequest, db: Session = Depends(get_db)):
 
 @app.post("/api/match/analyze")
 async def analyze_candidate(request: AnalyzeCandidateRequest, db: Session = Depends(get_db)):
-    gemini_key = resolve_gemini_api_key()
-    if not gemini_key:
-        raise HTTPException(
-            status_code=500,
-            detail="GEMINI_API_KEY (veya GOOGLE_API_KEY) .env içinde tanımlı değil",
-        )
-
-    os.environ.setdefault("GEMINI_API_KEY", gemini_key)
-    os.environ.setdefault("GOOGLE_API_KEY", gemini_key)
+    configure_llm_env()
 
     partner_row = (
         db.query(Partner)
@@ -247,16 +269,7 @@ async def analyze_candidate(request: AnalyzeCandidateRequest, db: Session = Depe
 
 @app.post("/api/match/stream")
 async def match_partner_stream(request: MatchRequest, db: Session = Depends(get_db)):
-    gemini_key = resolve_gemini_api_key()
-    if not gemini_key:
-        raise HTTPException(
-            status_code=500,
-            detail="GEMINI_API_KEY (veya GOOGLE_API_KEY) .env içinde tanımlı değil",
-        )
-
-    # CrewAI/LiteLLM farklı sağlayıcı isimlerini kullanabildiği için iki env'i de doldur.
-    os.environ.setdefault("GEMINI_API_KEY", gemini_key)
-    os.environ.setdefault("GOOGLE_API_KEY", gemini_key)
+    configure_llm_env()
 
     candidates = find_exact_candidates(request, db=db)[:3]
     if not candidates:
