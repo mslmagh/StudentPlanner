@@ -6,6 +6,7 @@ const navLinks = [
   { to: '/create-request', label: tr.nav.createRequest },
   { to: '/matching', label: tr.nav.matching },
   { to: '/active-sessions', label: tr.nav.activeSessions },
+  { to: '/assistant', label: tr.nav.assistant },
 ]
 
 function Navbar({ darkMode, onToggleTheme }) {

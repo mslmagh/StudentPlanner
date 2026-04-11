@@ -307,6 +307,61 @@ async def match_partner_stream(request: MatchRequest, db: Session = Depends(get_
     )
 
 
+# ─── LangGraph Study Assistant Endpoint'leri ──────────────────────────────────
+# Kursta Gradio UI üzerinden Sidekick.run_superstep çağrılıyordu.
+# Biz FastAPI + React kullandığımız için REST endpoint'ler oluşturuyoruz.
+# StudyAssistant aynı Worker → Tools → Evaluator pattern'ini kullanır.
+
+from study_assistant import StudyAssistant
+
+# Global asistan instance'ı — thread_id ile konuşma yönetimi yapılır
+_assistant: StudyAssistant | None = None
+
+
+def _get_assistant() -> StudyAssistant:
+    """Lazy init: İlk çağrıda StudyAssistant oluştur, sonrakilerde aynısını kullan."""
+    global _assistant
+    if _assistant is None:
+        configure_llm_env()
+        _assistant = StudyAssistant()
+    return _assistant
+
+
+class ChatRequest(BaseModel):
+    message: str
+    thread_id: str | None = None
+
+
+@app.post("/api/assistant/chat")
+async def assistant_chat(req: ChatRequest):
+    """
+    LangGraph asistanına mesaj gönder.
+    thread_id ile konuşma geçmişi korunur (MemorySaver).
+    İlk mesajda thread_id boş gelir, cevapla birlikte döndürülür.
+    """
+    try:
+        assistant = _get_assistant()
+        result = await assistant.chat(message=req.message, thread_id=req.thread_id)
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/api/assistant/reset")
+async def assistant_reset():
+    """
+    Asistanı sıfırla — yeni bir session başlat.
+    Kursta reset() fonksiyonu yeni Sidekick oluşturuyordu, biz de aynısını yapıyoruz.
+    """
+    global _assistant
+    try:
+        configure_llm_env()
+        _assistant = StudyAssistant()
+        return {"status": "ok", "thread_id": _assistant.session_id}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

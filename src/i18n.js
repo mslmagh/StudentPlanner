@@ -9,6 +9,7 @@ const tr = {
     createRequest: 'İstek Oluştur',
     matching: 'Eşleştirme',
     activeSessions: 'Aktif Oturumlar',
+    assistant: 'AI Asistan',
     darkMode: 'Karanlık Mod',
     lightMode: 'Aydınlık Mod',
   },
@@ -114,6 +115,25 @@ const tr = {
     startSession: '🚀 Oturumu Başlat',
     addToCalendar: '📅 Takvime Ekle',
     sendMessage: '💬 Mesaj Gönder',
+  },
+
+  assistant: {
+    title: '🤖 AI Çalışma Asistanı',
+    subtitle: 'LangGraph tabanlı akıllı asistan — ders partneri bulmada, çalışma planı oluşturmada ve akademik sorularınızda yardımcı olur.',
+    emptyState: 'Merhaba! Size nasıl yardımcı olabilirim? Aşağıdaki önerilerden birini seçebilir veya kendi sorunuzu yazabilirsiniz.',
+    suggestions: [
+      'Matematik dersi için partner öner',
+      'Hangi dersler mevcut?',
+      'Algoritmalar dersi için akşam çalışabilecek partner var mı?',
+      'Veri Yapıları dersinin partner istatistiklerini göster',
+    ],
+    you: 'Sen',
+    assistant: 'Asistan',
+    placeholder: 'Mesajınızı yazın...',
+    send: 'Gönder',
+    reset: 'Sıfırla',
+    infoTitle: 'LangGraph Nasıl Çalışır?',
+    infoDesc: 'Bu asistan LangGraph\'ın Worker → Evaluator döngüsünü kullanır. Worker mesajını işler, gerekirse araçları çağırır. Evaluator cevabı denetler — yetersizse Worker\'a geri gönderir (self-correction).',
   },
 
   health: {
