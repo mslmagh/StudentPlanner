@@ -31,6 +31,8 @@ The API will be available at `http://localhost:8000`.
 
 | Method | Path | Description |
 |--------|------|-------------|
+| `POST` | `/api/match/candidates` | List matching candidates (no AI, rule-based) |
+| `POST` | `/api/match/analyze` | AI-analyze a specific candidate (CrewAI pipeline) |
 | `POST` | `/api/match/stream` | Stream top matches as SSE (`data: {...}`) |
 | `GET`  | `/health`    | Health check |
 

@@ -1,158 +1,180 @@
-# AI Study Partner Finder
+# AI Study Partner Finder — StudentPlanner
 
-Frontend prototype of an education-focused partner-matching system inspired by Uber-style matching. Students create study requests and receive suggested study partners based on course, level, and time compatibility.
+An AI-powered education platform that helps students find compatible study partners using **two complementary AI systems**: **CrewAI** (multi-agent partner analysis) and **LangGraph** (intelligent study assistant with self-correcting graph-based workflow).
 
-## Project Description
+## 🏗️ Architecture Overview
 
-This project is a Homework 2 submission that includes:
-- A working frontend-only website
-- Simulated matching process and results
-- Mock data–driven rule-based matching logic
-- AI agent planning document for future architecture
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    React Frontend (Vite)                     │
+│         http://localhost:5173  •  Vercel (production)        │
+├──────────────────────────┬──────────────────────────────────┤
+│   /api/match/*           │   /api/assistant/*               │
+│        ↓                 │          ↓                       │
+│  ┌──────────────┐        │   ┌───────────────────┐          │
+│  │ CrewAI       │        │   │ LangGraph         │          │
+│  │ Backend      │        │   │ Backend           │          │
+│  │ Port 8000    │        │   │ Port 8001         │          │
+│  │              │        │   │                   │          │
+│  │ 3 Agents:    │        │   │ Graph Nodes:      │          │
+│  │ • Skill      │        │   │ • Worker (LLM)    │          │
+│  │   Analyzer   │        │   │ • Evaluator       │          │
+│  │ • Compat.    │        │   │ • Tools           │          │
+│  │   Agent      │  Shared│   │                   │          │
+│  │ • Study      │   DB   │   │ Tools:            │          │
+│  │   Planner    │◄──────►│   │ • search_partners │          │
+│  └──────────────┘        │   │ • list_courses    │          │
+│                          │   │ • get_partner_stats│         │
+│                          │   └───────────────────┘          │
+└──────────────────────────┴──────────────────────────────────┘
+```
 
-No backend is used in the current version.
+## ✨ Features
 
-## Features
+### CrewAI — Partner Matching Pipeline
+- **Skill Analyzer Agent**: Profiles student skill gaps based on course, level, and study preferences
+- **Compatibility Agent**: Scores partner compatibility (0–100) with detailed reasoning
+- **Study Planner Agent**: Generates personalized 1-week study plans with 5 sessions
+- Sequential pipeline: Skill Analysis → Compatibility → Study Plan
 
-- Home page with project introduction and CTA
-- Create Request page with required fields:
-  - Course
-  - Level (Beginner / Intermediate / Advanced)
-  - Preferred Time
-  - Study Type (Online / In-person)
-- Matching page with staged loading simulation:
-  - Searching for study partners...
-  - Analyzing schedules...
-  - Matching skill levels...
-- Active Sessions page listing matched partners (mock data)
-- Navigation bar between all pages
+### LangGraph — Intelligent Study Assistant
+- **Worker Node**: Processes user queries with tool access (database search, course listing, partner stats)
+- **Evaluator Node**: Validates response quality using structured output, retries if insufficient
+- **Self-Correction Loop**: Evaluator sends feedback back to Worker for improvement
+- **MemorySaver**: Thread-based conversation history via LangGraph checkpointer
+- **LangSmith Integration**: Full tracing and monitoring of graph execution steps
 
-## Technologies Used
+### Frontend (React + Vite)
+- Study request creation with course, level, time, and study type selection
+- Real-time AI partner matching with streaming results
+- Interactive chat interface for LangGraph Study Assistant
+- Active sessions management with messaging and calendar integration
+- Dark/Light theme toggle
+- Turkish localization (i18n)
 
-- React (Vite)
-- React Router DOM
-- Plain CSS
-- Static JSON data (mock)
-
-## Project Structure
+## 📁 Project Structure
 
 ```text
 StudentPlanner/
-├─ public/
-│  └─ _redirects
-├─ scripts/
-│  └─ generate-planning-pdf.mjs
-├─ src/
-│  ├─ components/
-│  │  └─ Navbar.jsx
-│  ├─ pages/
-│  │  ├─ HomePage.jsx
-│  │  ├─ CreateRequestPage.jsx
-│  │  ├─ MatchingPage.jsx
-│  │  └─ ActiveSessionsPage.jsx
-│  ├─ data/
-│  │  ├─ mockPartners.json
-│  │  └─ mockSessions.json
-│  ├─ utils/
-│  │  └─ matching.js
-│  ├─ App.jsx
-│  ├─ main.jsx
-│  └─ index.css
-├─ index.html
-├─ package.json
-├─ planning-document.md
-├─ planning-document.pdf
-├─ vercel.json
-└─ README.md
+├── src/                          # React frontend
+│   ├── pages/
+│   │   ├── HomePage.jsx          # Landing page
+│   │   ├── CreateRequestPage.jsx # Study request form
+│   │   ├── MatchingPage.jsx      # AI partner matching (CrewAI)
+│   │   ├── ActiveSessionsPage.jsx# Session management
+│   │   ├── SessionRoomPage.jsx   # Live study room
+│   │   └── StudyAssistantPage.jsx# LangGraph chat UI
+│   ├── components/Navbar.jsx
+│   ├── config.js                 # API base URLs
+│   └── i18n.js                   # Turkish translations
+│
+├── crew_backend/                 # CrewAI Backend (port 8000)
+│   ├── main.py                   # FastAPI server
+│   ├── crew.py                   # Agent/Task/Crew definitions
+│   ├── database.py               # SQLAlchemy models
+│   ├── config/
+│   │   ├── agents.yaml           # Agent roles & goals
+│   │   └── tasks.yaml            # Task descriptions
+│   └── requirements.txt
+│
+├── langgraph_backend/            # LangGraph Backend (port 8001)
+│   ├── main.py                   # FastAPI server
+│   ├── agent.py                  # StateGraph definition (Worker → Evaluator → Tools)
+│   ├── tools.py                  # LangChain tool definitions
+│   ├── database.py               # Shared database access
+│   └── requirements.txt
+│
+├── vite.config.js                # Vite proxy (routes to both backends)
+├── CrewAI_Report.md              # CrewAI implementation report
+├── LangGraph_Report.md           # LangGraph implementation report
+└── planning-document.md          # AI agent planning document
 ```
 
-## Screenshots
-
-Add UI screenshots under `docs/screenshots/` using these filenames:
-
-- `home.png`
-- `create-request.png`
-- `matching-loading.png`
-- `matching-results.png`
-- `active-sessions.png`
-
-Example markdown preview (already compatible with GitHub):
-
-```markdown
-![Home](./docs/screenshots/home.png)
-![Create Request](./docs/screenshots/create-request.png)
-![Matching Loading](./docs/screenshots/matching-loading.png)
-![Matching Results](./docs/screenshots/matching-results.png)
-![Active Sessions](./docs/screenshots/active-sessions.png)
-```
-
-## Setup Instructions
+## 🚀 Setup Instructions
 
 ### Prerequisites
-- Node.js 18+ (recommended)
-- npm 9+
+- Node.js 18+ and npm 9+
+- Python 3.10+
 
-### Install Dependencies
+### 1. Frontend
 
 ```bash
 npm install
-```
-
-## Run Locally
-
-```bash
 npm run dev
 ```
 
-Then open the local URL shown in terminal (usually `http://localhost:5173`).
+Frontend runs at `http://localhost:5173`.
 
-## Build for Production
-
-```bash
-npm run build
-```
-
-Generate planning document PDF:
+### 2. CrewAI Backend (port 8000)
 
 ```bash
-npm run plan:pdf
+cd crew_backend
+pip install -r requirements.txt
+cp .env.example .env    # Add your API keys
+uvicorn main:app --reload --port 8000
 ```
 
-Preview production build locally:
+### 3. LangGraph Backend (port 8001)
 
 ```bash
-npm run preview
+cd langgraph_backend
+pip install -r requirements.txt
+cp .env.example .env    # Add your API keys + LangSmith config
+uvicorn main:app --reload --port 8001
 ```
 
-## Deployment Instructions
+### Environment Variables
 
-### Option A: Vercel
-1. Push this repository to GitHub.
-2. Go to [Vercel](https://vercel.com) and import the repo.
-3. Framework preset: **Vite** (auto-detected in most cases).
-4. Build command: `npm run build`
-5. Output directory: `dist`
-6. Deploy.
+| Variable | Description | Used By |
+|----------|-------------|---------|
+| `OPENROUTER_API_KEY` | OpenRouter API key (recommended) | Both backends |
+| `OPENROUTER_MODEL` | Model ID (default: `deepseek/deepseek-chat`) | Both backends |
+| `GEMINI_API_KEY` | Google Gemini fallback key | Both backends |
+| `LANGCHAIN_TRACING_V2` | Enable LangSmith tracing (`true`) | LangGraph |
+| `LANGCHAIN_API_KEY` | LangSmith API key | LangGraph |
+| `LANGCHAIN_PROJECT` | LangSmith project name | LangGraph |
 
-### Option B: Netlify
-1. Push this repository to GitHub.
-2. Go to [Netlify](https://netlify.com) and create a new site from Git.
-3. Build command: `npm run build`
-4. Publish directory: `dist`
-5. Deploy site.
+## 🔧 LangGraph — How It Works
 
-## Planning Document
+The LangGraph Study Assistant follows the **Sidekick pattern** from the course (`ed-donner/agents/4_langgraph`):
 
-See the AI agent planning file:
+```
+START → Worker → (tool_calls?) → Tools → Worker (loop)
+                  (no tools)  → Evaluator
+                                    ↓
+                          success? → END
+                          fail?   → Worker (retry with feedback)
+                          need_input? → END
+```
 
-- [planning-document.md](./planning-document.md)
+1. **Worker** receives user message + system prompt, decides to use tools or respond directly
+2. **Tools** execute database queries (search partners, list courses, get stats)
+3. **Evaluator** validates the response quality using structured output (`EvaluatorOutput`)
+4. If insufficient → feedback is sent back to Worker for self-correction
+5. **MemorySaver** preserves conversation history across messages (thread-based)
 
-- [planning-document.pdf](./planning-document.pdf)
+## 📊 LangSmith Tracing
 
-This document explains the transition from current rule-based mock matching to a future CrewAI multi-agent architecture.
+LangSmith provides full observability of every graph execution step:
+- Worker LLM calls and token usage
+- Tool invocations and results  
+- Evaluator decisions and feedback
+- End-to-end latency and cost tracking
 
-## Homework 2 Submission Checklist
+Enable in `.env`:
+```
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=lsv2_pt_your_key
+LANGCHAIN_PROJECT=StudentPlanner-LangGraph
+```
 
-- GitHub repository link
-- Planning document PDF (`planning-document.pdf`)
-- Live demo link (Vercel or Netlify)
+## 🔗 Links
+
+- **GitHub**: https://github.com/mslmagh/StudentPlanner
+- **Frontend (Vercel)**: https://student-planner-ruddy.vercel.app
+
+## 📝 Reports
+
+- [CrewAI Implementation Report](./CrewAI_Report.md)
+- [LangGraph Implementation Report](./LangGraph_Report.md)
+- [AI Agent Planning Document](./planning-document.md)
