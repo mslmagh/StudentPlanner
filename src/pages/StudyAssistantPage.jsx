@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { API_BASE } from '../config'
+import { LANGGRAPH_BASE } from '../config'
 import tr from '../i18n'
 
 const { assistant: t } = tr
-const CHAT_URL = `${API_BASE}/api/assistant/chat`
-const RESET_URL = `${API_BASE}/api/assistant/reset`
+const CHAT_URL = `${LANGGRAPH_BASE}/api/assistant/chat`
+const RESET_URL = `${LANGGRAPH_BASE}/api/assistant/reset`
 
 /**
  * StudyAssistantPage — LangGraph Çalışma Asistanı

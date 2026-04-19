@@ -1,25 +1,27 @@
 """
-LangGraph Study Assistant - Graph Definition
-=============================================
-Kursta öğretilen Sidekick pattern'ini StudentPlanner'a uyarlar.
+LangGraph Study Assistant - Agent (Graph) Definition
+=====================================================
+Kursta (ed-donner/agents/4_langgraph/sidekick.py) öğretilen Sidekick pattern:
 
-PATTERN (ed-donner/agents/4_langgraph/sidekick.py ile aynı):
   START → Worker → (tools veya evaluator)
-          ↑                    ↓
-          └─── worker ←── Evaluator ──→ END
+            ↑                    ↓
+            └─── worker ←── Evaluator ──→ END
 
 Worker Node:
-  - Kullanıcının mesajını alır, system prompt ile LLM'e gönderir
-  - Araç çağrısı gerekiyorsa → tools node'a gider
-  - Cevap verdiyse → evaluator'a gider
+  - System prompt ile LLM'e görev verir, araçları bağlı tutar
+  - Araç çağrısı gerekiyorsa → tools node'a yönlendirilir
+  - Cevap verdiyse → evaluator'a yönlendirilir
 
 Evaluator Node:
-  - Worker'ın cevabını başarı kriterlerine göre değerlendirir
-  - structured_output ile feedback, success, user_input_needed döndürür
+  - Worker'ın cevabını structured output ile değerlendirir
   - Başarılı veya kullanıcı girdisi gerekiyorsa → END
-  - Yetersizse → tekrar Worker'a gönderir (self-correction)
+  - Yetersizse → tekrar Worker'a (self-correction)
 
-Bu pattern self-correcting agent sağlar: kötü cevaplar otomatik düzeltilir.
+MemorySaver:
+  - Kursta checkpointer olarak kullanılıyordu
+  - thread_id bazlı konuşma geçmişini tutar
+
+Bu dosya kursta Sidekick sınıfının birebir karşılığıdır.
 """
 
 import os
@@ -38,30 +40,22 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from assistant_tools import get_all_tools
+from tools import get_all_tools
 
 load_dotenv(override=True)
 
 # ─── LangSmith Entegrasyonu ──────────────────────────────────────────────────
-# LangSmith, LangGraph'ın her adımını (worker, evaluator, tool calls) izlenebilir yapar.
-# Aktif etmek için .env dosyasında şunları tanımla:
+# LangSmith, LangGraph'ın her adımını (worker, evaluator, tool calls) izler.
+# Aktif etmek için .env dosyasında:
 #   LANGCHAIN_TRACING_V2=true
 #   LANGCHAIN_API_KEY=<langsmith-api-key>
-#   LANGCHAIN_PROJECT=StudentPlanner
-# Bu env var'lar mevcutsa LangChain otomatik olarak trace gönderir.
+#   LANGCHAIN_PROJECT=StudentPlanner-LangGraph
 if os.getenv("LANGCHAIN_TRACING_V2", "").lower() == "true":
-    os.environ.setdefault("LANGCHAIN_PROJECT", "StudentPlanner")
-    # LangSmith endpoint default olarak https://api.smith.langchain.com
+    os.environ.setdefault("LANGCHAIN_PROJECT", "StudentPlanner-LangGraph")
     os.environ.setdefault("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
 
-# ─── State tanımı (kursta State TypedDict olarak tanımlanmıştı) ───────────────
-# Mesajlar: LangGraph'ın add_messages reducer'ı ile otomatik birleştirilir
-# success_criteria: evaluator'ın değerlendireceği başarı ölçütü
-# feedback_on_work: evaluator'ın worker'a verdiği geri bildirim
-# success_criteria_met: evaluator'ın kararı
-# user_input_needed: kullanıcıdan ek bilgi gerekip gerekmediği
 
-
+# ─── State: Kursta State(TypedDict) olarak tanımlanmıştı ─────────────────────
 class State(TypedDict):
     messages: Annotated[List[Any], add_messages]
     success_criteria: str
@@ -70,7 +64,7 @@ class State(TypedDict):
     user_input_needed: bool
 
 
-# ─── Evaluator'ın structured output'u (kursta EvaluatorOutput olarak tanımlanmıştı) ──
+# ─── Evaluator structured output (kursta EvaluatorOutput) ─────────────────────
 class EvaluatorOutput(BaseModel):
     feedback: str = Field(description="Feedback on the assistant's response")
     success_criteria_met: bool = Field(description="Whether the success criteria have been met")
@@ -79,12 +73,11 @@ class EvaluatorOutput(BaseModel):
     )
 
 
-# ─── LLM yapılandırması ──────────────────────────────────────────────────────
+# ─── LLM oluşturucu ──────────────────────────────────────────────────────────
 # Kursta gpt-4o-mini kullanılıyordu. Biz OpenRouter üzerinden çalışıyoruz.
-# OpenRouter, OpenAI-uyumlu API sağlıyor → ChatOpenAI ile direkt çalışır.
+# OpenRouter, OpenAI-uyumlu API → ChatOpenAI ile direkt çalışır.
 
 def _build_llm() -> ChatOpenAI:
-    """Mevcut env var'lardan LLM oluştur. OpenRouter veya Gemini destekler."""
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     if openrouter_key:
         model = os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat")
@@ -111,7 +104,7 @@ def _build_llm() -> ChatOpenAI:
     )
 
 
-# ─── StudyAssistant sınıfı (kursta Sidekick olarak adlandırılıyordu) ─────────
+# ─── StudyAssistant (kursta: Sidekick) ───────────────────────────────────────
 class StudyAssistant:
     """
     LangGraph tabanlı çalışma asistanı.
@@ -126,21 +119,18 @@ class StudyAssistant:
         self.memory = MemorySaver()
         self.session_id = str(uuid.uuid4())
 
-        # Worker LLM — araçlar bağlı
+        # Worker LLM — araçlar bağlı (kursta: worker_llm.bind_tools)
         worker_llm = _build_llm()
         self.worker_llm_with_tools = worker_llm.bind_tools(self.tools)
 
-        # Evaluator LLM — structured output (kursta with_structured_output kullanılıyordu)
+        # Evaluator LLM — structured output (kursta: with_structured_output)
         evaluator_llm = _build_llm()
         self.evaluator_llm_with_output = evaluator_llm.with_structured_output(EvaluatorOutput)
 
         # Graph'ı inşa et
         self._build_graph()
 
-    # ─── Worker Node ──────────────────────────────────────────────────────
-    # Kursta worker() fonksiyonu: system message oluşturur, feedback varsa ekler,
-    # LLM'i araçlarla invoke eder, cevabı döndürür.
-
+    # ─── Worker Node (kursta: def worker) ─────────────────────────────────
     def worker(self, state: State) -> Dict[str, Any]:
         system_message = f"""Sen StudentPlanner uygulamasının çalışma asistanısın.
 Öğrencilere ders partneri bulmada, çalışma planı oluşturmada ve akademik tavsiye vermede yardımcı olursun.
@@ -165,7 +155,6 @@ Daha önce verdiğin cevap reddedildi. Geri bildirim:
 {state["feedback_on_work"]}
 Bu geri bildirimi dikkate alarak tekrar dene."""
 
-        # System message'ı mesaj listesine ekle (kursta da aynı pattern)
         messages = list(state["messages"])
         found_system = False
         for msg in messages:
@@ -179,21 +168,15 @@ Bu geri bildirimi dikkate alarak tekrar dene."""
         response = self.worker_llm_with_tools.invoke(messages)
         return {"messages": [response]}
 
-    # ─── Worker Router (kursta worker_router) ─────────────────────────────
-    # Araç çağrısı varsa → tools node'a, yoksa → evaluator'a
-
+    # ─── Worker Router (kursta: def worker_router) ────────────────────────
     def worker_router(self, state: State) -> str:
         last_message = state["messages"][-1]
         if hasattr(last_message, "tool_calls") and last_message.tool_calls:
             return "tools"
         return "evaluator"
 
-    # ─── Evaluator Node ───────────────────────────────────────────────────
-    # Kursta evaluator(): Worker'ın cevabını değerlendirir, structured output döndürür.
-    # Başarılıysa END, kullanıcı girdisi gerekiyorsa END, yetersizse → worker'a geri.
-
+    # ─── Evaluator Node (kursta: def evaluator) ──────────────────────────
     def _format_conversation(self, messages: List[Any]) -> str:
-        """Konuşma geçmişini okunabilir formata çevir (kursta format_conversation)."""
         conversation = "Konuşma geçmişi:\n\n"
         for msg in messages:
             if isinstance(msg, HumanMessage):
@@ -241,23 +224,22 @@ Ama cevap yetersizse veya yanlışsa reddet."""
             "user_input_needed": eval_result.user_input_needed,
         }
 
-    # ─── Evaluator Router (kursta route_based_on_evaluation) ──────────────
+    # ─── Evaluator Router (kursta: def route_based_on_evaluation) ─────────
     def route_based_on_evaluation(self, state: State) -> str:
         if state["success_criteria_met"] or state["user_input_needed"]:
             return "END"
         return "worker"
 
-    # ─── Graph Builder (kursta build_graph) ───────────────────────────────
-    # StateGraph oluştur, node'ları ekle, edge'leri tanımla, compile et.
+    # ─── Graph Builder (kursta: async def build_graph) ────────────────────
     def _build_graph(self):
         graph_builder = StateGraph(State)
 
-        # Node'lar (kursta: worker, tools, evaluator)
+        # Node'lar
         graph_builder.add_node("worker", self.worker)
         graph_builder.add_node("tools", ToolNode(tools=self.tools))
         graph_builder.add_node("evaluator", self.evaluator)
 
-        # Edge'ler (kursta: conditional edges + normal edges)
+        # Edge'ler
         graph_builder.add_conditional_edges(
             "worker",
             self.worker_router,
@@ -274,12 +256,8 @@ Ama cevap yetersizse veya yanlışsa reddet."""
         # Compile (kursta: checkpointer=self.memory)
         self.graph = graph_builder.compile(checkpointer=self.memory)
 
-    # ─── Çalıştırma (kursta run_superstep) ────────────────────────────────
+    # ─── Chat (kursta: async def run_superstep) ──────────────────────────
     async def chat(self, message: str, thread_id: str | None = None) -> dict:
-        """
-        Kullanıcı mesajını grafa gönder ve cevabı al.
-        thread_id ile konuşma geçmişi korunur (MemorySaver sayesinde).
-        """
         config = {"configurable": {"thread_id": thread_id or self.session_id}}
 
         state = {
@@ -303,7 +281,6 @@ Ama cevap yetersizse veya yanlışsa reddet."""
                 break
 
         if not assistant_reply:
-            # Fallback: son mesajı al
             last = result["messages"][-1]
             assistant_reply = last.content if hasattr(last, "content") else str(last)
 

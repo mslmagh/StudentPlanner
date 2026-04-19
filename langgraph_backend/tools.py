@@ -1,15 +1,16 @@
 """
 LangGraph Study Assistant - Tool Definitions
 =============================================
-Bu modül, LangGraph asistanının kullanabileceği araçları tanımlar.
+Kursta (ed-donner/agents/4_langgraph/sidekick_tools.py) Sidekick'in
+playwright, search, file, wikipedia gibi araçları vardı.
 
-Kursta (ed-donner/agents/4_langgraph) Sidekick'in playwright, search, file gibi
-araçları vardı. Biz bunları StudentPlanner domain'ine uyarlıyoruz:
+Biz bunları StudentPlanner domain'ine uyarlıyoruz:
   - search_partners: Veritabanından partner arama
   - list_courses: Mevcut dersleri listeleme
-  - suggest_study_plan: Belirtilen bir ders için çalışma planı önerme
+  - get_partner_stats: Bir dersin partner istatistiklerini getirme
 
-langchain.agents.Tool kullanıyoruz — kursta da aynı pattern kullanılıyordu.
+Kursta langchain.agents.Tool kullanılıyordu, biz @tool decorator ile
+aynı şeyi yapıyoruz (langchain_core.tools.tool).
 """
 
 import json
@@ -86,5 +87,5 @@ def get_partner_stats(course: str) -> str:
 
 
 def get_all_tools():
-    """Tüm asistan araçlarını döndür — bu fonksiyon graph builder tarafından çağrılır."""
+    """Tüm asistan araçlarını döndür — graph builder tarafından çağrılır."""
     return [search_partners, list_courses, get_partner_stats]
