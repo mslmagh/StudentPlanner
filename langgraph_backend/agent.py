@@ -1,29 +1,3 @@
-"""
-LangGraph Study Assistant - Agent (Graph) Definition
-=====================================================
-Kursta (ed-donner/agents/4_langgraph/sidekick.py) öğretilen Sidekick pattern:
-
-  START → Worker → (tools veya evaluator)
-            ↑                    ↓
-            └─── worker ←── Evaluator ──→ END
-
-Worker Node:
-  - System prompt ile LLM'e görev verir, araçları bağlı tutar
-  - Araç çağrısı gerekiyorsa → tools node'a yönlendirilir
-  - Cevap verdiyse → evaluator'a yönlendirilir
-
-Evaluator Node:
-  - Worker'ın cevabını structured output ile değerlendirir
-  - Başarılı veya kullanıcı girdisi gerekiyorsa → END
-  - Yetersizse → tekrar Worker'a (self-correction)
-
-MemorySaver:
-  - Kursta checkpointer olarak kullanılıyordu
-  - thread_id bazlı konuşma geçmişini tutar
-
-Bu dosya kursta Sidekick sınıfının birebir karşılığıdır.
-"""
-
 import os
 import uuid
 from typing import Annotated, Any, Dict, List, Optional
@@ -230,16 +204,15 @@ Ama cevap yetersizse veya yanlışsa reddet."""
             return "END"
         return "worker"
 
-    # ─── Graph Builder (kursta: async def build_graph) ────────────────────
     def _build_graph(self):
         graph_builder = StateGraph(State)
 
-        # Node'lar
+        
         graph_builder.add_node("worker", self.worker)
         graph_builder.add_node("tools", ToolNode(tools=self.tools))
         graph_builder.add_node("evaluator", self.evaluator)
 
-        # Edge'ler
+    
         graph_builder.add_conditional_edges(
             "worker",
             self.worker_router,
@@ -253,10 +226,8 @@ Ama cevap yetersizse veya yanlışsa reddet."""
         )
         graph_builder.add_edge(START, "worker")
 
-        # Compile (kursta: checkpointer=self.memory)
         self.graph = graph_builder.compile(checkpointer=self.memory)
 
-    # ─── Chat (kursta: async def run_superstep) ──────────────────────────
     async def chat(self, message: str, thread_id: str | None = None) -> dict:
         config = {"configurable": {"thread_id": thread_id or self.session_id}}
 
