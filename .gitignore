@@ -13,3 +13,10 @@ __pycache__/
 
 # Local SQLite files
 *.db
+
+# Document and report files
+*.docx
+*.pdf
+LangGraph_Report.md
+StudentPlanner_Final_Report.md
+planning-document.md
