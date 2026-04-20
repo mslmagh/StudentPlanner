@@ -119,7 +119,7 @@ const tr = {
 
   assistant: {
     title: '🤖 AI Çalışma Asistanı',
-    subtitle: 'LangGraph tabanlı akıllı asistan — ders partneri bulmada, çalışma planı oluşturmada ve akademik sorularınızda yardımcı olur.',
+    subtitle: 'Yapay zeka destekli akıllı asistan — ders partneri bulmada, çalışma planı oluşturmada ve akademik sorularınızda yardımcı olur.',
     emptyState: 'Merhaba! Size nasıl yardımcı olabilirim? Aşağıdaki önerilerden birini seçebilir veya kendi sorunuzu yazabilirsiniz.',
     suggestions: [
       'Matematik dersi için partner öner',

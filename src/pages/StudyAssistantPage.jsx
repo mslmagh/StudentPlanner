@@ -157,20 +157,6 @@ function StudyAssistantPage() {
         </div>
       </div>
 
-      {/* LangGraph bilgi kutusu */}
-      <div className="langgraph-info">
-        <h3>{t.infoTitle}</h3>
-        <p>{t.infoDesc}</p>
-        <div className="graph-flow">
-          <span className="flow-node">START</span>
-          <span className="flow-arrow">→</span>
-          <span className="flow-node active">Worker</span>
-          <span className="flow-arrow">→</span>
-          <span className="flow-node">Tools / Evaluator</span>
-          <span className="flow-arrow">→</span>
-          <span className="flow-node">END</span>
-        </div>
-      </div>
     </div>
   )
 }
