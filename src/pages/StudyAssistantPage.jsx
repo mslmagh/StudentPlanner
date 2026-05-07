@@ -105,16 +105,7 @@ function StudyAssistantPage() {
         <p className="assistant-subtitle">{t.subtitle}</p>
       </div>
 
-      <div className="assistant-explainer">
-        <div className="assistant-explainer-card">
-          <h2>{t.infoTitle}</h2>
-          <p>{t.infoDesc}</p>
-        </div>
-        <div className="assistant-explainer-card process">
-          <h2>{t.processTitle}</h2>
-          <p>{t.processDesc}</p>
-        </div>
-      </div>
+
 
       <div className="chat-container">
         <div className="chat-messages">
@@ -141,41 +132,6 @@ function StudyAssistantPage() {
             <div key={idx} className={`chat-bubble ${msg.role}`}>
               <div className="bubble-role">{msg.role === 'user' ? t.you : t.assistant}</div>
               <div className="bubble-content">{msg.content}</div>
-              {msg.role === 'assistant' && msg.debug && (
-                <div className="assistant-debug-panel">
-                  <div className="assistant-debug-summary">
-                    <span className={`assistant-debug-pill ${msg.debug.tool_backend}`}>{getBackendLabel(msg.debug)}</span>
-                    <span className="assistant-debug-flow">{t.graphLabel}: {msg.debug.graph_path.join(' → ')}</span>
-                  </div>
-
-                  {msg.debug.fallback_reason && (
-                    <div className="assistant-debug-warning">
-                      <strong>{t.warningLabel}:</strong> {msg.debug.fallback_reason}
-                    </div>
-                  )}
-
-                  <div className="assistant-debug-section-title">{t.toolCallsLabel}</div>
-                  {msg.debug.tool_trace.length === 0 ? (
-                    <div className="assistant-debug-empty">{t.noToolCalls}</div>
-                  ) : (
-                    <div className="assistant-debug-steps">
-                      {msg.debug.tool_trace.map((step, stepIdx) => (
-                        <div key={`${idx}-${stepIdx}`} className="assistant-debug-step">
-                          <div className="assistant-debug-step-name">{step.name}</div>
-                          <div className="assistant-debug-step-block">
-                            <span>{t.argsLabel}</span>
-                            <pre>{formatDebugValue(step.args)}</pre>
-                          </div>
-                          <div className="assistant-debug-step-block">
-                            <span>{t.resultLabel}</span>
-                            <pre>{formatDebugValue(step.result)}</pre>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           ))}
 
