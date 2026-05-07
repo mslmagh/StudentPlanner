@@ -14,8 +14,10 @@ aynı şeyi yapıyoruz (langchain_core.tools.tool).
 """
 
 import json
-from database import SessionLocal, Partner
+
 from langchain_core.tools import tool
+
+from partner_services import get_partner_stats_data, list_courses_data, search_partners_data
 
 
 @tool
@@ -23,67 +25,24 @@ def search_partners(course: str, level: str = "", time: str = "", study_type: st
     """Search for study partners in the database by course, level, time slot, and study type.
     At minimum a course name is required. Other filters are optional.
     Returns a JSON list of matching partners."""
-    db = SessionLocal()
-    try:
-        query = db.query(Partner)
-        if course:
-            query = query.filter(Partner.course == course)
-        if level:
-            query = query.filter(Partner.level == level)
-        if time:
-            query = query.filter(Partner.time == time)
-        if study_type:
-            query = query.filter(Partner.studyType == study_type)
-
-        partners = query.limit(10).all()
-        if not partners:
-            return json.dumps({"message": "Bu kriterlere uygun partner bulunamadı.", "results": []}, ensure_ascii=False)
-
-        results = [p.to_dict() for p in partners]
-        return json.dumps({"message": f"{len(results)} partner bulundu.", "results": results}, ensure_ascii=False)
-    finally:
-        db.close()
+    return json.dumps(
+        search_partners_data(course=course, level=level, time=time, study_type=study_type),
+        ensure_ascii=False,
+    )
 
 
 @tool
 def list_courses() -> str:
     """List all unique courses available in the database.
     Returns a JSON list of course names."""
-    db = SessionLocal()
-    try:
-        courses = db.query(Partner.course).distinct().all()
-        course_list = sorted([c[0] for c in courses if c[0]])
-        return json.dumps({"courses": course_list}, ensure_ascii=False)
-    finally:
-        db.close()
+    return json.dumps(list_courses_data(), ensure_ascii=False)
 
 
 @tool
 def get_partner_stats(course: str) -> str:
     """Get statistics about partners for a specific course: counts by level, time slot, and study type.
     Useful for understanding availability before searching."""
-    db = SessionLocal()
-    try:
-        partners = db.query(Partner).filter(Partner.course == course).all()
-        if not partners:
-            return json.dumps({"message": f"'{course}' dersi için partner bulunamadı."}, ensure_ascii=False)
-
-        stats = {
-            "course": course,
-            "total": len(partners),
-            "by_level": {},
-            "by_time": {},
-            "by_study_type": {},
-        }
-
-        for p in partners:
-            stats["by_level"][p.level] = stats["by_level"].get(p.level, 0) + 1
-            stats["by_time"][p.time] = stats["by_time"].get(p.time, 0) + 1
-            stats["by_study_type"][p.studyType] = stats["by_study_type"].get(p.studyType, 0) + 1
-
-        return json.dumps(stats, ensure_ascii=False)
-    finally:
-        db.close()
+    return json.dumps(get_partner_stats_data(course), ensure_ascii=False)
 
 
 def get_all_tools():

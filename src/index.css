@@ -1666,6 +1666,35 @@ input:focus, select:focus {
   margin: 0 auto;
 }
 
+.assistant-explainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.assistant-explainer-card {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(14, 165, 233, 0.08));
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  box-shadow: var(--card-shadow);
+}
+
+.assistant-explainer-card.process {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.09), rgba(37, 99, 235, 0.07));
+}
+
+.assistant-explainer-card h2 {
+  font-size: 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.assistant-explainer-card p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 .assistant-header {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -1684,11 +1713,12 @@ input:focus, select:focus {
 /* Chat container */
 .chat-container {
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--card-border);
   border-radius: 1rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--card-shadow);
 }
 
 .chat-messages {
@@ -1716,14 +1746,14 @@ input:focus, select:focus {
 }
 
 .suggestion-chip {
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 2rem;
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--text);
+  color: var(--text-main);
 }
 
 .suggestion-chip:hover {
@@ -1750,8 +1780,8 @@ input:focus, select:focus {
 
 .chat-bubble.assistant {
   align-self: flex-start;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-bottom-left-radius: 0.25rem;
 }
 
@@ -1803,19 +1833,19 @@ input:focus, select:focus {
   display: flex;
   gap: 0.5rem;
   padding: 1rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--card-border);
   align-items: flex-end;
 }
 
 .chat-input {
   flex: 1;
   resize: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--input-bg);
+  color: var(--text-main);
   font-family: inherit;
   min-height: 44px;
   max-height: 120px;

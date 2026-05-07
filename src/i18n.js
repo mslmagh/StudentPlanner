@@ -134,6 +134,18 @@ const tr = {
     reset: 'Sıfırla',
     infoTitle: 'LangGraph Nasıl Çalışır?',
     infoDesc: 'Bu asistan LangGraph\'ın Worker → Evaluator döngüsünü kullanır. Worker mesajını işler, gerekirse araçları çağırır. Evaluator cevabı denetler — yetersizse Worker\'a geri gönderir (self-correction).',
+    processTitle: 'MCP Nasıl Gösteriliyor?',
+    processDesc: 'Aşağıdaki cevap kartlarında asistanın araçları doğrudan mı yoksa MCP server üzerinden mi kullandığı, hangi araç çağrılarının yapıldığı ve dönen sonuç özeti görünür.',
+    modeLabel: 'Araç Kaynağı',
+    modeMcp: 'MCP Server',
+    modeLocal: 'Yerel Tool',
+    modeLocalFallback: 'Yerel Tool (MCP fallback)',
+    graphLabel: 'Akış',
+    toolCallsLabel: 'Araç Çağrıları',
+    noToolCalls: 'Bu yanıtta araç çağrısı yapılmadı.',
+    warningLabel: 'Not',
+    argsLabel: 'Parametreler',
+    resultLabel: 'Sonuç Özeti',
   },
 
   health: {
